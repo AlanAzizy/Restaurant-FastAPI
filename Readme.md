@@ -1,0 +1,1 @@
+ini adalah project latihan menggunakan fast-api
