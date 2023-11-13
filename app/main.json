@@ -162,13 +162,6 @@
             "TotalHarga": 21.98
         },
         {
-            "PesananID": 2,
-            "MenuID": 2,
-            "TanggalPemesanan": "2023-11-02",
-            "JumlahPemesanan": 3,
-            "TotalHarga": 26.97
-        },
-        {
             "PesananID": 3,
             "MenuID": 1,
             "TanggalPemesanan": "2023-10-01",
@@ -203,5 +196,28 @@
             "JumlahPemesanan": 2,
             "TotalHarga": 21.98
         }
-    ]
+    ],
+    "User": {
+        "johndoe": {
+            "username": "johndoe",
+            "full_name": "John Doe",
+            "email": "johndoe@example.com",
+            "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
+            "disabled": false
+        },
+        "johni": {
+            "username": "johni",
+            "email": "johni@example.com",
+            "full_name": "Johni",
+            "disabled": false,
+            "hashed_password": "$2b$12$W7/USMs0w0kJiEyjgBcZfOLcJG0oWFnxm2SGARpxjuLnSNN2YOC52"
+        },
+        "john": {
+            "username": "john",
+            "email": "john@example.com",
+            "full_name": "John",
+            "disabled": false,
+            "hashed_password": "$2b$12$379197wcgsGxeuEgwYEF6e0fvnVq3aL2.0NGunwSKTljIVuC.ASMa"
+        }
+    }
 }

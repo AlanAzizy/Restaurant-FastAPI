@@ -7,6 +7,14 @@ class HidanganBahanMakanan(BaseModel):
     BahanID: int
     Jumlah: float
 
+    def toJson(self):
+        return {
+            "ID": self.ID,
+            "MenuID": self.MenuID,
+            "BahanID": self.BahanID,
+            "Jumlah": self.Jumlah
+        }
+
     class Config: 
         json_schema_extra = {
             "ID": 1,
