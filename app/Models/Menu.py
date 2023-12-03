@@ -2,11 +2,10 @@ from pydantic import BaseModel
 from typing import List
 
 class Menu(BaseModel):
-    MenuID : int
+    MenuId : int
     NamaMenu: str
     Harga: float
     Deskripsi: str
-    Ketersediaan: int
 
     class Config: 
         json_schema_extra = {

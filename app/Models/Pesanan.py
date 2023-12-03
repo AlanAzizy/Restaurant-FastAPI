@@ -3,11 +3,10 @@ from typing import List
 from datetime import date
 
 class Pesanan(BaseModel):
-    PesananID : int
-    MenuID : int
+    PesananId : int
+    DaftarMenu : int
     TanggalPemesanan : date
-    JumlahPemesanan : int
-    TotalHarga : float
+    Total : float
 
     def toJson(self):
         return {
