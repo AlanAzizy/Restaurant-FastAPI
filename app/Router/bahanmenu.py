@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, HTTPException, status, Depends
-from Models.BahanMenu import BahanMenu
+from app.Models.BahanMenu import BahanMenu
 from typing import List, Annotated
-from Middleware.jwt import check_is_admin
+from app.Middleware.jwt import check_is_admin
 import json
 import sqlite3
 

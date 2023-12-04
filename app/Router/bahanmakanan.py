@@ -1,6 +1,6 @@
-from Middleware.jwt import check_is_admin
+from app.Middleware.jwt import check_is_admin
 from fastapi import APIRouter, Body, HTTPException, status, Depends
-from Models.BahanMakanan import BahanMakanan
+from app.Models.BahanMakanan import BahanMakanan
 from typing import List, Annotated
 import json
 import sqlite3

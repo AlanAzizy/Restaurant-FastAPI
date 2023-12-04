@@ -1,6 +1,6 @@
 import sqlite3;
 import json;
-from app.Middleware.jwt import get_password_hash
+# from app.Middleware.jwt import get_password_hash
 
 
 conn = sqlite3.connect('./app/resto.db')
@@ -66,7 +66,29 @@ for row in rows:
 
 # cursor.execute('''INSERT INTO User (ID, USERNAME, FULL_NAME, EMAIL, HASHED_PASSWORD, ROLE) VALUES(2,'ALAN','ALAN AZIZ','ALAN@GMAIL.COM',?,'admin')''',(get_password_hash('inialan'),))
 
+# cursor.execute('''ALTER TABLE USER ADD COLUMN friend_token TEXT''')
+
 cursor.execute('''SELECT * FROM USER''')
+
+cursor.execute('''SELECT 
+    Menu.Menu_Id, 
+    Menu.Nama,
+    Menu.Harga,
+    MIN(Bahan.Stok / Bahan_Menu.Jumlah) AS AvailableMenu
+FROM 
+    Menu
+JOIN 
+    Bahan_Menu ON Menu.Menu_Id = Bahan_Menu.Menu_Id
+JOIN 
+    Bahan ON Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+GROUP BY 
+    Menu.Menu_Id, 
+    Menu.Nama,
+    Menu.Harga           
+HAVING 
+    MIN(Bahan.Stok / Bahan_Menu.Jumlah) >= 1
+
+    ''')
 rows = cursor.fetchall()
 print(rows)
 

@@ -5,9 +5,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from Models.TokenData import TokenData
-from Models.User import User
-from Models.UserInDB import UserInDB
+from app.Models.TokenData import TokenData
+from app.Models.User import User
+from app.Models.UserInDB import UserInDB
 import sqlite3
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -28,16 +28,24 @@ def get_password_hash(password):
 def get_user(username: str):
     conn = sqlite3.connect('./app/resto.db')
     cursor = conn.cursor()
+    cursor.execute('''SELECT username FROM USER''')
+    rows = cursor.fetchall()
+    print(rows)
 
     # Execute the query
     cursor.execute('''SELECT * FROM USER WHERE USERNAME = ?''', (username,))
     
     columns = [column[0] for column in cursor.description]
     rows = cursor.fetchall()
+    print(rows)
     if rows :
         for row in rows:
             print(row)
-            user_data = {'username' : row[1], 'email': row[3], 'full_name' : row[2], 'hashed_password' : row[4], 'role' : row[5]}
+            if (not row[6]):
+                token = ""
+            else:
+                token = row[6]
+            user_data = {'username' : row[1], 'email': row[3], 'full_name' : row[2], 'hashed_password' : row[4], 'role' : row[5], 'friend_token' : token}
             # user = User(**user_data)
             users = UserInDB(**user_data)
             print(users)
@@ -50,7 +58,9 @@ def get_user(username: str):
         
 
 def authenticate_user( username: str, password: str):
+    print(3)
     user = get_user(username)
+    print(user)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):

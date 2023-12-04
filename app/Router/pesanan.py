@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Body, HTTPException, status, Depends
+from fastapi import APIRouter, Body, HTTPException, status, Depends, Form
 from fastapi.responses import JSONResponse, RedirectResponse
 from datetime import date
-from Models.Pesanan import Pesanan
-from Models.BahanMakanan import BahanMakanan
-from Models.PesananData import PesananData
+from app.Models.Pesanan import Pesanan
+from app.Models.BahanMakanan import BahanMakanan
+from app.Models.PesananData import PesananData
+from app.Models.UserInDB import UserInDB
 from typing import List, Annotated
-from Middleware.jwt import check_is_admin, check_is_login
+from app.Middleware.jwt import check_is_admin, check_is_login, get_current_user
 import json
 import sqlite3
-from Router.menupesanan import create_menupesanan
+from app.Router.menupesanan import create_menupesanan
+import requests
 
 pesanan_router = APIRouter(
     tags=["Pesanan"]
@@ -79,8 +81,8 @@ def create_pesanan_router(pesanan:Pesanan, check : Annotated[bool, Depends(check
     conn.close()
     return pesanan
 
-@pesanan_router.post("/createdata", response_model=PesananData)
-def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depends(check_is_admin)]):
+@pesanan_router.post("/pesanAntar")
+def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return
     conn = sqlite3.connect('./app/resto.db')
@@ -93,39 +95,151 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
     else :
         id=0
 
-    # tempStatus = True
-
+    print(id)
     for data in pesanan.Data :
-        data.Id = id
-        Data, status = create_menupesanan(data)
-        if (status==False):
-            print(status)
-            tempStatus = False
+        data.Id = id+1
+        cursor.execute('''
+    UPDATE Bahan
+    SET STOK = STOK - (
+        SELECT JUMLAH 
+        FROM Bahan_Menu 
+        WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+    )
+    WHERE Bahan.Bahan_Id IN (
+        SELECT Bahan_Id 
+        FROM Bahan_Menu 
+        WHERE Bahan_Menu.Menu_Id = ?
+    )
+    AND STOK >= (
+        SELECT Bahan_Menu.JUMLAH*Menu_Pesanan.JUMLAH 
+        FROM Bahan_Menu NATURAL JOIN Menu_Pesanan
+        WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+    )
+''', (data.MenuId, data.MenuId, data.MenuId, ))
+    
+        rows_affected = cursor.rowcount
+        
 
-    if tempStatus :
-        cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
-        rows = cursor.fetchone()
-        if rows :
-            Id = rows[0]
-        else :
-            Id=0
-
-        cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan NATURAL JOIN Menu WHERE Menu_pesanan.Id=?''', (id,) )
-        rows = cursor.fetchone()
-        pesanan.Total = rows[0]
-        print(rows[0])
+        if rows_affected > 0:
+            print("Update successful. Rows affected:", rows_affected)
 
         # Execute the query
-        cursor.execute('''INSERT INTO Pesanan (Pesanan_Id, Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (?,?,?,?)''', (Id+1,id, date.today(), rows[0] ,))
-        rows = cursor.fetchall()
-        conn.commit()
-        conn.close()
-        return pesanan
-    else:
-        raise HTTPException(
-        status_code=310,
-        detail="Stock is not available"
+            cursor.execute('''INSERT INTO Menu_pesanan (Id, Menu_Id, Jumlah) VALUES (?,?,?)''', (data.Id, data.MenuId, data.Jumlah ,))
+            
+    cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
+    rows = cursor.fetchone()
+    if rows :
+        Id = rows[0]
+    else :
+        Id=0
+
+    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan NATURAL JOIN Menu WHERE Menu_pesanan.Id=?''', (id,) )
+    rows = cursor.fetchone()
+    pesanan.Total = rows[0]
+    print(rows[0])
+    price = rows[0]
+
+    # Execute the query
+    cursor.execute('''INSERT INTO Pesanan (Pesanan_Id, Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (?,?,?,?)''', (Id+1,id, date.today(), rows[0] ,))
+    rows = cursor.fetchall()
+
+    #batas tidak aman
+    friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/order"
+    ft = user.friend_token
+    print(ft)
+    headers = {
+        "Authorization" : f"Bearer {ft}"
+    }
+    data_to_send = {
+        "price": price,
+        "food_id": 17,
+        "is_hemat": is_hemat,
+        "pesanan_id": Id+1,
+        "time": "string",
+        "user_id": 0,
+        "shipping_price": 0
+    }
+
+    conn.commit()
+    conn.close()
+    print(99)
+    try:
+        response = requests.post(friend_service_url, json=data_to_send, headers=headers)
+        # response.raise_for_status()
+        friend_response_data = response.json()
+        return friend_response_data
+    except requests.RequestException as e:
+        print(response.text)
+        raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
+    #batas tidaka aman
+
+    return pesanan
+
+
+@pesanan_router.post("/createdata", response_model=PesananData)
+def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depends(check_is_login)]):
+    if not check:
+        return
+    conn = sqlite3.connect('./app/resto.db')
+    cursor = conn.cursor()
+
+    cursor.execute('''SELECT Id FROM Menu_Pesanan ORDER BY Id DESC LIMIT 1''')
+    rows = cursor.fetchone()
+    if rows :
+        id = rows[0]
+    else :
+        id=0
+
+    print(id)
+    for data in pesanan.Data :
+        data.Id = id+1
+        cursor.execute('''
+    UPDATE Bahan
+    SET STOK = STOK - (
+        SELECT JUMLAH 
+        FROM Bahan_Menu 
+        WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
+    WHERE Bahan.Bahan_Id IN (
+        SELECT Bahan_Id 
+        FROM Bahan_Menu 
+        WHERE Bahan_Menu.Menu_Id = ?
+    )
+    AND STOK >= (
+        SELECT Bahan_Menu.JUMLAH*Menu_Pesanan.JUMLAH 
+        FROM Bahan_Menu NATURAL JOIN Menu_Pesanan
+        WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+    )
+''', (data.MenuId, data.MenuId, data.MenuId, ))
+    
+        rows_affected = cursor.rowcount
+        
+
+        if rows_affected > 0:
+            print("Update successful. Rows affected:", rows_affected)
+
+        # Execute the query
+            cursor.execute('''INSERT INTO Menu_pesanan (Id, Menu_Id, Jumlah) VALUES (?,?,?)''', (data.Id, data.MenuId, data.Jumlah ,))
+            
+    cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
+    rows = cursor.fetchone()
+    if rows :
+        Id = rows[0]
+    else :
+        Id=0
+
+    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan NATURAL JOIN Menu WHERE Menu_pesanan.Id=?''', (id,) )
+    rows = cursor.fetchone()
+    pesanan.Total = rows[0]
+    print(rows[0])
+
+    # Execute the query
+    cursor.execute('''INSERT INTO Pesanan (Pesanan_Id, Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (?,?,?,?)''', (Id+1,id, date.today(), rows[0] ,))
+    rows = cursor.fetchall()
+    conn.commit()
+    conn.close()
+    return pesanan
+
 
 @pesanan_router.put("/{pesanan_id}", response_model=Pesanan)
 def update_bahanmakanan(pesanan_id: int, pesanan_baru:Pesanan, check : Annotated[bool, Depends(check_is_admin)]):
@@ -159,6 +273,72 @@ def delete_bahanmakanan(pesanan_id: int, check : Annotated[bool, Depends(check_i
     conn.commit()
     conn.close()
     return pesanan
+
+@pesanan_router.get("pesanantar/price")
+async def get_pesan_antar_price(is_hemat : bool, check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
+    if not check:
+        return
+    friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/order/price/17"
+    print(user)
+    ft = user.friend_token
+    print(ft)
+    headers = {
+        "Authorization" : f"Bearer {ft}"
+    }
+    data_to_send = {
+        "hemat" : is_hemat
+    }
+    try:
+        response = requests.get(friend_service_url, params=data_to_send, headers=headers)
+        # response.raise_for_status()
+        friend_response_data = response.json()
+        return friend_response_data
+    except requests.RequestException as e:
+        print(response.text)
+        raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
+
+@pesanan_router.get("pesanantar/time")
+async def get_pesan_antar_time(is_hemat : bool, check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
+    if not check:
+        return
+    friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/order/time/17"
+    print(user)
+    ft = user.friend_token
+    print(ft)
+    headers = {
+        "Authorization" : f"Bearer {ft}"
+    }
+    data_to_send = {
+        "hemat" : is_hemat
+    }
+    try:
+        response = requests.get(friend_service_url, params=data_to_send, headers=headers)
+        # response.raise_for_status()
+        friend_response_data = response.json()
+        return friend_response_data
+    except requests.RequestException as e:
+        print(response.text)
+        raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
+    
+@pesanan_router.get("pesanantar/data/{id}")
+async def get_pesan_antar_data(id: int,check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
+    if not check:
+        return
+    friend_service_url = f"https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/order/{id}"
+    print(user)
+    ft = user.friend_token
+    print(ft)
+    headers = {
+        "Authorization" : f"Bearer {ft}"
+    }
+    try:
+        response = requests.get(friend_service_url, headers=headers)
+        # response.raise_for_status()
+        friend_response_data = response.json()
+        return friend_response_data
+    except requests.RequestException as e:
+        print(response.text)
+        raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
 
 
 

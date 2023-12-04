@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, HTTPException, status, Depends
-from Models.MenuPesanan import MenuPesanan
+from app.Models.MenuPesanan import MenuPesanan
 from typing import List, Annotated
-from Middleware.jwt import check_is_admin
+from app.Middleware.jwt import check_is_admin
 import json
 import sqlite3
 
@@ -81,7 +81,7 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
 ''', (MenuPesanan.MenuId, MenuPesanan.MenuId, MenuPesanan.MenuId, ))
     
     rows_affected = cursor.rowcount
-    print(rows_affected)
+    
 
     if rows_affected > 0:
         print("Update successful. Rows affected:", rows_affected)
@@ -89,11 +89,12 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
     # Execute the query
         cursor.execute('''INSERT INTO Menu_pesanan (Id, Menu_Id, Jumlah) VALUES (?,?,?)''', (MenuPesanan.Id, MenuPesanan.MenuId, MenuPesanan.Jumlah ,))
         rows = cursor.fetchall()
+        print(rows)
         conn.commit()
         conn.close()
-        return MenuPesanan, True
+        return MenuPesanan
     else:
-        return MenuPesanan, False
+        return MenuPesanan
 
 @menupesanan_router.put("/{id}", response_model=MenuPesanan)
 def update_BahanMenu(id: int, Menu_id: int, menu_pesanan_baru:MenuPesanan, check : Annotated[bool, Depends(check_is_admin)]):

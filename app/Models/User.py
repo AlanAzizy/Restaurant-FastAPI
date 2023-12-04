@@ -6,6 +6,7 @@ class User(BaseModel):
     email: str | None = None
     full_name: str | None = None
     role : str
+    friend_token : str
 
     class Config: 
         json_schema_extra = {

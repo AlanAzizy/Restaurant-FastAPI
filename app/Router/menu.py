@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Body, HTTPException, status, Depends
-from Models.Menu import Menu
-from Models.Pesanan import Pesanan
+from app.Models.Menu import Menu
+from app.Models.Pesanan import Pesanan
 from typing import List, Annotated
-from Middleware.jwt import check_is_admin, check_is_login
+from app.Middleware.jwt import check_is_admin, check_is_login
 import json
 import sqlite3
 
@@ -81,25 +81,31 @@ def get_menu_stok(check : Annotated[bool, Depends(check_is_login)]):
     conn = sqlite3.connect('./app/resto.db')
     cursor = conn.cursor()
 
+    cursor.execute('''SELECT HARGA FROM MENU''')
+
     cursor.execute('''SELECT 
-        Menu.Menu_Id, 
-        Menu.Nama,
-        MIN(Bahan.Stok / Bahan_Menu.Jumlah) AS AvailableMenu
-    FROM 
-        Menu
-    JOIN 
-        Bahan_Menu ON Menu.Menu_Id = Bahan_Menu.Menu_Id
-    JOIN 
-        Bahan ON Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
-    GROUP BY 
-        Menu.Menu_Id, 
-        Menu.Nama
-    HAVING 
-        AvailableMenu >= 1
+    Menu.Menu_Id, 
+    Menu.Nama,
+    Menu.Harga,
+    MIN(Bahan.Stok / Bahan_Menu.Jumlah) AS AvailableMenu
+FROM 
+    Menu
+JOIN 
+    Bahan_Menu ON Menu.Menu_Id = Bahan_Menu.Menu_Id
+JOIN 
+    Bahan ON Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+GROUP BY 
+    Menu.Menu_Id, 
+    Menu.Nama,
+    Menu.Harga           
+HAVING 
+    MIN(Bahan.Stok / Bahan_Menu.Jumlah) >= 1
+
     ''')
 
     rows = cursor.fetchall()
 
+    conn.close()
     return rows
 
 
