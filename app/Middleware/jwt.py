@@ -28,6 +28,11 @@ def get_password_hash(password):
 def get_user(username: str):
     conn = sqlite3.connect('./app/resto.db')
     cursor = conn.cursor()
+
+    cursor.execute('''SELECT name FROM sqlite_master WHERE type='table';''')
+    rows = cursor.fetchall()
+    print(rows)
+
     cursor.execute('''SELECT username FROM USER''')
     rows = cursor.fetchall()
     print(rows)
