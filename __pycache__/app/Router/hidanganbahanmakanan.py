@@ -18,7 +18,6 @@ async def retrieve_all_hidangan(check: Annotated[bool, Depends(check_is_login)])
         return HidanganBahanMakanans
 
 @hidanganbahanmakanan_router.get("/{id}",response_model=HidanganBahanMakanan)
-<<<<<<<< HEAD:__pycache__/app/Router/hidanganbahanmakanan.py
 async def retrieve_hidangan(id : int) -> HidanganBahanMakanan:
     for HidanganBahanMakanan in HidanganBahanMakanans:
         if HidanganBahanMakanan["ID"] == id :
@@ -27,17 +26,6 @@ async def retrieve_hidangan(id : int) -> HidanganBahanMakanan:
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Event with supplied ID does not exist"
     )
-========
-async def retrieve_hidangan(id : int, check: Annotated[bool, Depends(check_is_login)]) -> HidanganBahanMakanan:
-    if check:
-        for HidanganBahanMakanan in HidanganBahanMakanans:
-            if HidanganBahanMakanan["ID"] == id :
-                return HidanganBahanMakanan
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Hidangan makanan with supplied ID does not exist"
-        )
->>>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657:app/Router/hidanganbahanmakanan.py
 
 @hidanganbahanmakanan_router.post("/", response_model=HidanganBahanMakanan)
 def create_hidanganbahanmakanan(hidanganbahanmakanan: HidanganBahanMakanan, check: Annotated[bool, Depends(check_is_login)]):

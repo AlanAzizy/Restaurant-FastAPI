@@ -1,57 +1,29 @@
 from datetime import datetime, timedelta
 from typing import Annotated
 import json
-<<<<<<< HEAD
 from fastapi import Depends, FastAPI, HTTPException, status, APIRouter, Form
-=======
-from fastapi import Depends, FastAPI, HTTPException, status, APIRouter
->>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
-<<<<<<< HEAD
 from app.Middleware.jwt import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_active_user, get_password_hash, check_is_admin
 from app.Models.Token import Token
 from app.Models.User import User, UserRegistration
-from app import DatabaseManager
 import requests
 import sqlite3
-=======
-from app.Middleware.jwt import authenticate_user, create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_active_user, get_password_hash
-from app.Models.Token import Token
-from app.Models.User import User, UserRegistration
->>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657
 
 
 auth_router = APIRouter(
     tags=["auth"]
 )
 
-<<<<<<< HEAD
 # to get a string like this run:
 # openssl rand -hex 32
-
-db_manager = DatabaseManager()
 
 @auth_router.post("/token", response_model=Token)
 async def login_for_access_token(
     username: str = Form(...), password: str = Form(...)): #flag:bool):
     user = authenticate_user( username, password)
-=======
-
-with open("app/main.json", "r") as file :
-    data = json.load(file)
-    Users = data["User"]
-# to get a string like this run:
-# openssl rand -hex 32
-
-@auth_router.post("/token", response_model=Token)
-async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-):
-    user = authenticate_user(form_data.username, form_data.password, Users)
->>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -62,9 +34,8 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-<<<<<<< HEAD
-    db_manager.connect()
-
+    conn = sqlite3.connect('./app/resto.db')
+    cursor = conn.cursor()
     friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/login/single"
 
     friend_token_data = {
@@ -82,8 +53,9 @@ async def login_for_access_token(
         raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
     print(friend_token, username)
     query = "UPDATE user SET friend_token = ? WHERE username = ?"
-    db_manager.execute_query(query, (friend_token, username, ))
-    db_manager.close()
+    cursor.execute(query, (friend_token, username, ))
+    conn.commit()   
+    conn.close()
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -101,8 +73,6 @@ async def login_for(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )  
-=======
->>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657
     return {"access_token": access_token, "token_type": "bearer"}
 
 @auth_router.get("/users/me/", response_model=User)
@@ -111,7 +81,6 @@ async def read_users_me(
 ):
     return current_user
 
-<<<<<<< HEAD
 
 @auth_router.get("/users/me/items/")
 async def read_own_items(
@@ -131,13 +100,10 @@ async def read_own_items(
     conn.close()
     return rows
 
-=======
->>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657
 @auth_router.get("/")
 def test():
     return {"null"}
 
-<<<<<<< HEAD
 @auth_router.post("/register", response_model=Token)
 async def register_user(username : str = Form(...), password : str = Form(...), email : str = Form(...), full_name : str = Form(...), flag : bool = Form(...), lat : float = Form(...), lon : float = Form(...)):
     # Check if the username is already taken
@@ -149,30 +115,18 @@ async def register_user(username : str = Form(...), password : str = Form(...), 
     rows = cursor.fetchall()
     print(rows)
     if rows:
-=======
-
-@auth_router.post("/register", response_model=Token)
-async def register_user(user_data: UserRegistration):
-    # Check if the username is already taken
-    if user_data.username in Users:
->>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered",
         )
 
     # Check if the email is already taken
-<<<<<<< HEAD
     if any(row[3] == email for row in rows):
-=======
-    if any(user["email"] == user_data.email for user in Users.values()):
->>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
         )
 
-<<<<<<< HEAD
     cursor.execute('''SELECT ID FROM USER ORDER BY ID DESC LIMIT 1''')
     row = cursor.fetchone()
     print(row[0])
@@ -224,19 +178,6 @@ async def register_user(user_data: UserRegistration):
     # Generate an access token for the new user
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data={"sub": username})
-=======
-    # Create a new user
-    new_user = User(username=user_data.username, email=user_data.email, full_name=user_data.full_name, disabled=False)
-    Users[new_user.username] = new_user.toJson()
-    Users[new_user.username]["hashed_password"] = get_password_hash(user_data.password)
-
-
-    with open("app/main.json", "w") as file:
-        json.dump(data, file, indent=4)
-    # Generate an access token for the new user
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": new_user.username}, expires_delta=access_token_expires)
->>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657
 
     return {"access_token": access_token, "token_type": "bearer"}
 
