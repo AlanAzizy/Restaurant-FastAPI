@@ -7,6 +7,15 @@ class Menu(BaseModel):
     Harga: float
     Deskripsi: str
 
+    def toJson(self):
+        return { 
+            "MenuID": self.MenuID,
+            "NamaMenu": self.NamaMenu,
+            "Harga": self.Harga,
+            "Deskripsi": self.Deskripsi,
+            "Ketersediaan" : self.Ketersediaan
+        }
+
     class Config: 
         json_schema_extra = {
             "MenuID": 1,

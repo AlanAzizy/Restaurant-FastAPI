@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Body, HTTPException, status
+from fastapi import APIRouter, Body, HTTPException, status, Depends
 from app.Models.HidanganBahanMakanan import HidanganBahanMakanan
-from typing import List
+from typing import List, Annotated
+from app.Middleware.jwt import check_is_login
 import json
 
 hidanganbahanmakanan_router = APIRouter(
@@ -12,10 +13,12 @@ with open("app/main.json", "r") as file :
     HidanganBahanMakanans = data["HidanganBahanMakanan"]
 
 @hidanganbahanmakanan_router.get("/", response_model=List[HidanganBahanMakanan])
-async def retrieve_all_hidangan() -> List[HidanganBahanMakanan] :
-    return HidanganBahanMakanans
+async def retrieve_all_hidangan(check: Annotated[bool, Depends(check_is_login)]) -> List[HidanganBahanMakanan] :
+    if check :
+        return HidanganBahanMakanans
 
 @hidanganbahanmakanan_router.get("/{id}",response_model=HidanganBahanMakanan)
+<<<<<<<< HEAD:__pycache__/app/Router/hidanganbahanmakanan.py
 async def retrieve_hidangan(id : int) -> HidanganBahanMakanan:
     for HidanganBahanMakanan in HidanganBahanMakanans:
         if HidanganBahanMakanan["ID"] == id :
@@ -24,24 +27,50 @@ async def retrieve_hidangan(id : int) -> HidanganBahanMakanan:
         status_code=status.HTTP_404_NOT_FOUND,
         detail="Event with supplied ID does not exist"
     )
+========
+async def retrieve_hidangan(id : int, check: Annotated[bool, Depends(check_is_login)]) -> HidanganBahanMakanan:
+    if check:
+        for HidanganBahanMakanan in HidanganBahanMakanans:
+            if HidanganBahanMakanan["ID"] == id :
+                return HidanganBahanMakanan
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Hidangan makanan with supplied ID does not exist"
+        )
+>>>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657:app/Router/hidanganbahanmakanan.py
 
 @hidanganbahanmakanan_router.post("/", response_model=HidanganBahanMakanan)
-def create_hidanganbahanmakanan(hidanganbahanmakanan: HidanganBahanMakanan):
-    HidanganBahanMakanans.append(hidanganbahanmakanan)
-    return hidanganbahanmakanan
+def create_hidanganbahanmakanan(hidanganbahanmakanan: HidanganBahanMakanan, check: Annotated[bool, Depends(check_is_login)]):
+    if check:
+        HidanganBahanMakanans.append(hidanganbahanmakanan.toJson())
+        with open("app/main.json", "w") as file:
+            json.dump(data, file, indent=4)
+        return hidanganbahanmakanan
 
 @hidanganbahanmakanan_router.put("/{hidanganbahanmakanan_id}", response_model=HidanganBahanMakanan)
-def update_hidanganbahanmakanan(hidanganbahanmakanan_id: int, hidanganbahanmakanan_baru: HidanganBahanMakanan):
-    for hidanganbahanmakanan in HidanganBahanMakanans:
-        if hidanganbahanmakanan["ID"]==hidanganbahanmakanan_id:
-            hidanganbahanmakanan = hidanganbahanmakanan_baru
-    return hidanganbahanmakanan_baru
+def update_hidanganbahanmakanan( hidanganbahanmakanan_baru: HidanganBahanMakanan, hidanganbahanmakanan_id: int, check: Annotated[bool, Depends(check_is_login)]):
+    if check:
+        for hidanganbahanmakanan in HidanganBahanMakanans:
+            if hidanganbahanmakanan["ID"]==hidanganbahanmakanan_id:
+                HidanganBahanMakanans.pop(HidanganBahanMakanans.index(hidanganbahanmakanan))
+                hidanganbahanmakanan = hidanganbahanmakanan_baru
+                HidanganBahanMakanans.append(hidanganbahanmakanan_baru.toJson())
+                with open("app/main.json", "w") as file:
+                        json.dump(data, file, indent=4)
+                return hidanganbahanmakanan_baru
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Data hidangan bahan makanan id {hidanganbahanmakanan_id} Not Found")
 
 @hidanganbahanmakanan_router.delete("/{hidanganbahanmakanan_id}", response_model=HidanganBahanMakanan)
-def delete_hidanganbahanmakanan(hidanganbahanmakanan_id: int):
-    i=0
-    for hidanganbahanmakanan in HidanganBahanMakanans:
-        if hidanganbahanmakanan["ID"]==hidanganbahanmakanan_id:
-            e=hidanganbahanmakanan
-    hidanganbahanmakanan = HidanganBahanMakanans.pop(HidanganBahanMakanans.index(e))
-    return hidanganbahanmakanan
+def delete_hidanganbahanmakanan(hidanganbahanmakanan_id: int, check: Annotated[bool, Depends(check_is_login)]):
+    if check :
+        i=0
+        e=False
+        for hidanganbahanmakanan in HidanganBahanMakanans:
+            if hidanganbahanmakanan["ID"]==hidanganbahanmakanan_id:
+                e=hidanganbahanmakanan
+        if e:
+            hidanganbahanmakanan = HidanganBahanMakanans.pop(HidanganBahanMakanans.index(e))
+            with open("app/main.json", "w") as file:
+                    json.dump(data, file, indent=4)
+            return hidanganbahanmakanan
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Data bahan makanan id {hidanganbahanmakanan_id} Not Found")

@@ -4,7 +4,10 @@ from app.Router.bahanmenu import bahanmenu_router
 from app.Router.bahanmakanan import bahanmakanan_router
 from app.Router.menu import menu_router
 from app.Router.auth import auth_router
+<<<<<<< HEAD
 from app.Router.menupesanan import menupesanan_router
+=======
+>>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -26,8 +29,11 @@ app.include_router(pesanan_router, prefix="/pesanan")
 app.include_router(bahanmakanan_router, prefix="/bahanmakanan")
 app.include_router(bahanmenu_router, prefix="/bahanmenu")
 app.include_router(menu_router, prefix="/menu")
+<<<<<<< HEAD
 app.include_router(menupesanan_router, prefix="/menupesanan")
+=======
+>>>>>>> ff9a2a15613669c04259afd2a71e31e8c2b6d657
 app.include_router(auth_router)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=80, reload=True)

@@ -6,6 +6,14 @@ class BahanMakanan(BaseModel):
     NamaBahan : str
     Stok: int
 
+    def toJson(self):
+        return {
+            "BahanMakananId": self.BahanMakananId,
+            "NamaBahan": self.NamaBahan,
+            "Stok": self.Stok,
+            "BatasMinimal": self.BatasMinimal
+        }
+
     class Config: 
         json_schema_extra = {
             "BahanId": 1,
