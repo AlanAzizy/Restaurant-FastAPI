@@ -19,6 +19,7 @@ async def retrieve_all_bahanmenu(check : Annotated[bool, Depends(check_is_admin)
     # Execute the query
     cursor.execute('''SELECT * FROM Bahan_Menu''')
     rows = cursor.fetchall()
+    conn.commit()
     conn.close()
     bahan_menu_list = []
     print(rows)
@@ -40,6 +41,7 @@ async def retrieve_BahanMenu(id : int, check : Annotated[bool, Depends(check_is_
     rows = cursor.fetchall()
     print(rows)
     bahan_menu_list = []
+    conn.commit()
     conn.close()
     if rows :
         for row in rows:

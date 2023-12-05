@@ -19,6 +19,7 @@ async def retrieve_all_MenuPesanan(check : Annotated[bool, Depends(check_is_admi
     # Execute the query
     cursor.execute('''SELECT * FROM Menu_pesanan''')
     rows = cursor.fetchall()
+    conn.commit()
     conn.close()
     menu_pesanan_list = []
     print(rows)
@@ -40,6 +41,7 @@ async def retrieve_BahanMenu(id : int, check : Annotated[bool, Depends(check_is_
     rows = cursor.fetchall()
     print(rows)
     menu_pesanan_list = []
+    conn.commit()
     conn.close()
     if rows :
         for row in rows:
@@ -81,6 +83,7 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
 ''', (MenuPesanan.MenuId, MenuPesanan.MenuId, MenuPesanan.MenuId, ))
     
     rows_affected = cursor.rowcount
+    conn.commit()
     
 
     if rows_affected > 0:
@@ -94,6 +97,7 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
         conn.close()
         return MenuPesanan
     else:
+        conn.close()
         return MenuPesanan
 
 @menupesanan_router.put("/{id}", response_model=MenuPesanan)

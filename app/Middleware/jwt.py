@@ -38,6 +38,7 @@ def get_user(username: str):
     columns = [column[0] for column in cursor.description]
     rows = cursor.fetchall()
     print(rows)
+    conn.commit()
     if rows :
         for row in rows:
             print(row)
@@ -141,6 +142,8 @@ async def check_is_admin(token: Annotated[bool, Depends(oauth2_scheme)]):
     query = ("SELECT * FROM user WHERE username = ?")
     cursor.execute(query, (username,))
     result = cursor.fetchone()
+    conn.commit()
+    conn.close()
     if not result:
         raise credentials_exception
     elif result[5] != "admin":

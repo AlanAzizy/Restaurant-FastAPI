@@ -19,6 +19,7 @@ async def retrieve_all_bahanmakanan(check : Annotated[bool, Depends(check_is_adm
     # Execute the query
     cursor.execute('''SELECT * FROM Bahan''')
     rows = cursor.fetchall()
+    conn.commit()
     conn.close()
     bahan_makanan_list = []
     print(rows)
@@ -38,6 +39,7 @@ async def retrieve_bahanmakanan(id : int, check : Annotated[bool, Depends(check_
     # Execute the query
     cursor.execute('''SELECT * FROM Bahan WHERE Bahan_Id = ?''', (id,))
     row = cursor.fetchone()
+    conn.commit()
     conn.close()
     if row:
         # Assuming rows contain tuples from the database

@@ -26,6 +26,7 @@ async def retrieve_all_Pesanan(check : Annotated[bool, Depends(check_is_login)])
     # Execute the query
     cursor.execute('''SELECT * FROM Pesanan''')
     rows = cursor.fetchall()
+    conn.commit()
     conn.close()
     pesanan_list = []
     print(rows)
@@ -46,6 +47,7 @@ async def retrieve_Pesanan(id : int, check : Annotated[bool, Depends(check_is_lo
     # Execute the query
     cursor.execute('''SELECT * FROM Pesanan WHERE Pesanan_Id = ?''', (id,))
     row = cursor.fetchone()
+    conn.commit()
     conn.close()
     if row:
         # Assuming rows contain tuples from the database
@@ -118,6 +120,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
 ''', (data.MenuId, data.MenuId, data.MenuId, ))
     
         rows_affected = cursor.rowcount
+        conn.commit()
         
 
         if rows_affected > 0:
@@ -125,6 +128,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
 
         # Execute the query
             cursor.execute('''INSERT INTO Menu_pesanan (Id, Menu_Id, Jumlah) VALUES (?,?,?)''', (data.Id, data.MenuId, data.Jumlah ,))
+            conn.commit()
             
     cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
     rows = cursor.fetchone()
@@ -142,6 +146,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     # Execute the query
     cursor.execute('''INSERT INTO Pesanan (Pesanan_Id, Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (?,?,?,?)''', (Id+1,id, date.today(), rows[0] ,))
     rows = cursor.fetchall()
+    conn.commit()
 
     #batas tidak aman
     friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/order"
@@ -160,7 +165,6 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
         "shipping_price": 0
     }
 
-    conn.commit()
     conn.close()
     print(99)
     try:
@@ -213,6 +217,7 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
 ''', (data.MenuId, data.MenuId, data.MenuId, ))
     
         rows_affected = cursor.rowcount
+        conn.commit()
         
 
         if rows_affected > 0:
@@ -220,6 +225,7 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
 
         # Execute the query
             cursor.execute('''INSERT INTO Menu_pesanan (Id, Menu_Id, Jumlah) VALUES (?,?,?)''', (data.Id, data.MenuId, data.Jumlah ,))
+            conn.commit()
             
     cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
     rows = cursor.fetchone()
@@ -274,7 +280,7 @@ def delete_bahanmakanan(pesanan_id: int, check : Annotated[bool, Depends(check_i
     conn.close()
     return pesanan
 
-@pesanan_router.get("pesanantar/price")
+@pesanan_router.get("/pesanantar/price")
 async def get_pesan_antar_price(is_hemat : bool, check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return
@@ -297,7 +303,7 @@ async def get_pesan_antar_price(is_hemat : bool, check : Annotated[bool, Depends
         print(response.text)
         raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
 
-@pesanan_router.get("pesanantar/time")
+@pesanan_router.get("/pesanantar/time")
 async def get_pesan_antar_time(is_hemat : bool, check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return
@@ -320,7 +326,7 @@ async def get_pesan_antar_time(is_hemat : bool, check : Annotated[bool, Depends(
         print(response.text)
         raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
     
-@pesanan_router.get("pesanantar/data/{id}")
+@pesanan_router.get("/pesanantar/data/{id}")
 async def get_pesan_antar_data(id: int,check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return

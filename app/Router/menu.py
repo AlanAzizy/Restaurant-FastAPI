@@ -43,6 +43,7 @@ def read_Menu(menu_id: int, check : Annotated[bool, Depends(check_is_login)]):
     # Execute the query
     cursor.execute('''SELECT * FROM Menu WHERE Menu_Id = ?''', (menu_id,))
     row = cursor.fetchone()
+    conn.commit()
     conn.close()
     if row:
         # Assuming rows contain tuples from the database
@@ -65,6 +66,7 @@ def read_semua_Menu(check : Annotated[bool, Depends(check_is_login)]):
     # Execute the query
     cursor.execute('''SELECT * FROM Menu''')
     rows = cursor.fetchall()
+    conn.commit()
     conn.close()
     menu_list = []
     print(rows)
@@ -104,7 +106,7 @@ HAVING
     ''')
 
     rows = cursor.fetchall()
-
+    conn.commit()
     conn.close()
     return rows
 
@@ -125,6 +127,8 @@ def get_menu_terlaris(check : Annotated[bool, Depends(check_is_login)]):
         ''')
     
     rows = cursor.fetchall()
+    conn.commit()
+    conn.close()
     return rows
 
 @menu_router.post("/", response_model=Menu)

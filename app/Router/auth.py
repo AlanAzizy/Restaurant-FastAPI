@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from app.Middleware.jwt import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_active_user, get_password_hash, check_is_admin
 from app.Models.Token import Token
 from app.Models.User import User, UserRegistration
+from app import DatabaseManager
 import requests
 import sqlite3
 
@@ -19,6 +20,8 @@ auth_router = APIRouter(
 
 # to get a string like this run:
 # openssl rand -hex 32
+
+db_manager = DatabaseManager()
 
 @auth_router.post("/token", response_model=Token)
 async def login_for_access_token(
@@ -34,8 +37,8 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    conn = sqlite3.connect('./app/resto.db')
-    cursor = conn.cursor()
+    db_manager.connect()
+
     friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/login/single"
 
     friend_token_data = {
@@ -53,9 +56,8 @@ async def login_for_access_token(
         raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
     print(friend_token, username)
     query = "UPDATE user SET friend_token = ? WHERE username = ?"
-    cursor.execute(query, (friend_token, username, ))
-    conn.commit()   
-    conn.close()
+    db_manager.execute_query(query, (friend_token, username, ))
+    db_manager.close()
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -96,6 +98,8 @@ async def read_own_items(
     cursor = conn.cursor()
     cursor.execute('''SELECT * FROM USER''')
     rows = cursor.fetchall()
+    conn.commit()
+    conn.close()
     return rows
 
 @auth_router.get("/")
@@ -140,10 +144,13 @@ async def register_user(username : str = Form(...), password : str = Form(...), 
     }
 
     # Define and execute the SQL INSERT query
+    
     cursor.execute('''
         INSERT INTO USER (id, username, email, hashed_password, full_name, role)
         VALUES (?,?,?,?,?,?)
     ''', (row[0]+1, username, email, get_password_hash(password), full_name, 'user', ))
+
+    conn.commit()
 
     if flag : 
         friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/register"
@@ -172,7 +179,7 @@ async def register_user(username : str = Form(...), password : str = Form(...), 
 
     # Generate an access token for the new user
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(data={"sub": username}, expires_delta=access_token_expires)
+    access_token = create_access_token(data={"sub": username})
 
     return {"access_token": access_token, "token_type": "bearer"}
 
