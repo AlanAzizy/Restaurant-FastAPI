@@ -149,7 +149,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     conn.commit()
 
     #batas tidak aman
-    friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/order"
+    friend_service_url = "https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.io/order"
     ft = user.friend_token
     print(ft)
     headers = {
@@ -284,7 +284,7 @@ def delete_bahanmakanan(pesanan_id: int, check : Annotated[bool, Depends(check_i
 async def get_pesan_antar_price(is_hemat : bool, check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return
-    friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/order/price/17"
+    friend_service_url = "https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.io/order/price/17"
     print(user)
     ft = user.friend_token
     print(ft)
@@ -307,7 +307,7 @@ async def get_pesan_antar_price(is_hemat : bool, check : Annotated[bool, Depends
 async def get_pesan_antar_time(is_hemat : bool, check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return
-    friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/order/time/17"
+    friend_service_url = "https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.io/order/time/17"
     print(user)
     ft = user.friend_token
     print(ft)
@@ -330,7 +330,7 @@ async def get_pesan_antar_time(is_hemat : bool, check : Annotated[bool, Depends(
 async def get_pesan_antar_data(id: int,check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return
-    friend_service_url = f"https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/order/{id}"
+    friend_service_url = f"https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.ios/order/{id}"
     print(user)
     ft = user.friend_token
     print(ft)

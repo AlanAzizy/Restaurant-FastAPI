@@ -36,7 +36,7 @@ async def login_for_access_token(
     )
     conn = sqlite3.connect('./app/resto.db')
     cursor = conn.cursor()
-    friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/login/single"
+    friend_service_url = "https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.io/login/single"
 
     friend_token_data = {
         "username": username,
@@ -151,7 +151,7 @@ async def register_user(username : str = Form(...), password : str = Form(...), 
     conn.commit()
 
     if flag : 
-        friend_service_url = "https://prudentfood.delightfulbay-27fb577d.australiaeast.azurecontainerapps.io/register"
+        friend_service_url = "https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.io/register"
 
         friend_data = {
             "username": username,
