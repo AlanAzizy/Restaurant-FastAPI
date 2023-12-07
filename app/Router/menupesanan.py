@@ -92,7 +92,7 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
     # Execute the query
         cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (%s,%s)''', (MenuPesanan.MenuId, MenuPesanan.Jumlah ,))
         cursor.execute('''SELECT * FROM Menu_pesanan ORDER BY Id DESC LIMIT 1''')
-        row = cursor.fetchall()
+        row = cursor.fetchone()
         row_dict = {"Id" : row[0], "MenuId" : row[1], "Jumlah" : row[2]}  # Assuming only one row is fetched
         # Parse the dictionary using your Pydantic model
         menu_pesanan = MenuPesanan(**row_dict)
@@ -112,7 +112,7 @@ def update_BahanMenu(id: int, Menu_id: int, menu_pesanan_baru:MenuPesanan, check
 
     cursor.execute('''UPDATE Menu_pesanan SET Menu_Id=%s, Jumlah=%s WHERE Id=%s AND Menu_Id=%s''', ( menu_pesanan_baru.MenuId, menu_pesanan_baru.Jumlah, id, Menu_id,))
     cursor.execute('''SELECT * FROM Menu_pesanan WHERE Id=%s And Menu_Id=%s''',id,Menu_id,)
-    row = cursor.fetchall()
+    row = cursor.fetchone()
     row_dict = {"Id" : row[0], "MenuId" : row[1], "Jumlah" : row[2]}  # Assuming only one row is fetched
         # Parse the dictionary using your Pydantic model
     menu_pesanan = MenuPesanan(**row_dict)

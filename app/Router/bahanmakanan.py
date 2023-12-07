@@ -64,8 +64,8 @@ def create_bahanmakanan_router(bahanmakanan:BahanMakanan, check : Annotated[bool
 
     # Execute the query
     cursor.execute('''INSERT INTO Bahan (Nama, STOK) VALUES (%s,%s)''', (bahanmakanan.NamaBahan, bahanmakanan.Stok ,))
-    cursor.execute('''SELECT Bahan_Id FROM Bahan ORDER BY Bahan_Id DESC LIMIT 1''')
-    row = cursor.fetchall()
+    cursor.execute('''SELECT * FROM Bahan ORDER BY Bahan_Id DESC LIMIT 1''')
+    row = cursor.fetchone()
     row_dict = {"BahanId" : row[0], "NamaBahan" : row[1], "Stok" : row[2]}
     bahan_makanan = BahanMakanan(**row_dict)
     conn.commit()
@@ -80,8 +80,8 @@ def update_bahanmakanan(bahanmakanan_id: int, bahanmakanan_baru:BahanMakanan, ch
     cursor = conn.cursor()
 
     cursor.execute('''UPDATE Bahan SET Nama=%s, STOK=%s WHERE Bahan_Id=%s''', ( bahanmakanan_baru.NamaBahan, bahanmakanan_baru.Stok, bahanmakanan_id,))
-    cursor.execute('''SELECT Bahan_Id FROM Bahan WHERE Bahan_Id=%s''',(bahanmakanan_id,))
-    row = cursor.fetchall()
+    cursor.execute('''SELECT * FROM Bahan WHERE Bahan_Id=%s''',(bahanmakanan_id,))
+    row = cursor.fetchone()
     row_dict = {"BahanId" : row[0], "NamaBahan" : row[1], "Stok" : row[2]}
     bahan_makanan = BahanMakanan(**row_dict)
     conn.commit()

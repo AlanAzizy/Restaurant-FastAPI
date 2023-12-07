@@ -66,7 +66,7 @@ def create_bahanmenu_router(BahanMenu:BahanMenu, check : Annotated[bool, Depends
     # Execute the query
     cursor.execute('''INSERT INTO Bahan_Menu (Menu_Id, Bahan_Id, Jumlah) VALUES (%s,%s,%s)''', (BahanMenu.MenuId, BahanMenu.BahanId, BahanMenu.Jumlah ,))
     cursor.execute('''SELECT * FROM Bahan_Menu WHERE ORDER BY Menu_Id DESC LIMIT 1''')
-    row=cursor.fetchall()
+    row=cursor.fetchone()
     row_dict = {"MenuId" : row[0], "BahanId" : row[1], "Jumlah" : row[2]}  # Assuming only one row is fetched
         # Parse the dictionary using your Pydantic model
     bahan_menu = BahanMenu(**row_dict)
@@ -83,7 +83,7 @@ def update_BahanMenu(Menu_id: int, Bahan_id: int, BahanMenu_baru:BahanMenu, chec
 
     cursor.execute('''UPDATE Bahan_Menu SET Bahan_Id=%s, Jumlah=%s WHERE Menu_Id=%s AND Bahan_Id=%s''', ( BahanMenu_baru.BahanId, BahanMenu_baru.Jumlah, Menu_id, Bahan_id,))
     cursor.execute('''SELECT * FROM Bahan_Menu WHERE Menu_Id=%s AND Bahan_Id=%s''', (Menu_id,Bahan_id,))
-    row=cursor.fetchall()
+    row=cursor.fetchone()
     row_dict = {"MenuId" : row[0], "BahanId" : row[1], "Jumlah" : row[2]}  # Assuming only one row is fetched
         # Parse the dictionary using your Pydantic model
     bahan_menu = BahanMenu(**row_dict)
