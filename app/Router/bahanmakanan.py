@@ -61,19 +61,16 @@ def create_bahanmakanan_router(bahanmakanan:BahanMakanan, check : Annotated[bool
     conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''SELECT Bahan_Id FROM Bahan ORDER BY Bahan_Id DESC LIMIT 1''')
-    rows = cursor.fetchone()
-    if rows :
-        id = rows[0]
-    else :
-        id=0
 
     # Execute the query
     cursor.execute('''INSERT INTO Bahan (Nama, STOK) VALUES (%s,%s)''', (bahanmakanan.NamaBahan, bahanmakanan.Stok ,))
-    rows = cursor.fetchall()
+    cursor.execute('''SELECT Bahan_Id FROM Bahan ORDER BY Bahan_Id DESC LIMIT 1''')
+    row = cursor.fetchall()
+    row_dict = {"BahanId" : row[0], "NamaBahan" : row[1], "Stok" : row[2]}
+    bahan_makanan = BahanMakanan(**row_dict)
     conn.commit()
     conn.close()
-    return bahanmakanan
+    return bahan_makanan
 
 @bahanmakanan_router.put("/{bahanmakanan_id}", response_model=BahanMakanan)
 def update_bahanmakanan(bahanmakanan_id: int, bahanmakanan_baru:BahanMakanan, check : Annotated[bool, Depends(check_is_admin)]):
@@ -83,9 +80,13 @@ def update_bahanmakanan(bahanmakanan_id: int, bahanmakanan_baru:BahanMakanan, ch
     cursor = conn.cursor()
 
     cursor.execute('''UPDATE Bahan SET Nama=%s, STOK=%s WHERE Bahan_Id=%s''', ( bahanmakanan_baru.NamaBahan, bahanmakanan_baru.Stok, bahanmakanan_id,))
+    cursor.execute('''SELECT Bahan_Id FROM Bahan WHERE Bahan_Id=%s''',(bahanmakanan_id,))
+    row = cursor.fetchall()
+    row_dict = {"BahanId" : row[0], "NamaBahan" : row[1], "Stok" : row[2]}
+    bahan_makanan = BahanMakanan(**row_dict)
     conn.commit()
     conn.close()
-    return bahanmakanan_baru
+    return bahan_makanan
 
 @bahanmakanan_router.delete("/{bahanmakanan_id}", response_model=BahanMakanan)
 def delete_bahanmakanan(bahanmakanan_id: int, check : Annotated[bool, Depends(check_is_admin)]):

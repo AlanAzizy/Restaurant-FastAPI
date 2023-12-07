@@ -69,7 +69,7 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
     SET STOK = STOK - (
         SELECT JUMLAH 
         FROM Bahan_Menu 
-        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
     WHERE Bahan.Bahan_Id IN (
         SELECT Bahan_Id 
@@ -77,12 +77,11 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
         WHERE Bahan_Menu.Menu_Id = %s
     )
     AND STOK >= (
-        SELECT Bahan_Menu.JUMLAH*Menu_Pesanan.JUMLAH 
-        FROM Bahan_Menu JOIN Menu_Pesanan ON Bahan_Menu.Menu_Id=Menu_Pesanan.Menu_Id
-        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        SELECT Bahan_Menu.JUMLAH*%s 
+        FROM Bahan_Menu
+        WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
-''', (MenuPesanan.MenuId, MenuPesanan.MenuId, MenuPesanan.MenuId, ))
-    
+''', (MenuPesanan.MenuId, MenuPesanan.MenuId, MenuPesanan.Jumlah,MenuPesanan.MenuId, ))    
     rows_affected = cursor.rowcount
     conn.commit()
     
@@ -92,11 +91,14 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
 
     # Execute the query
         cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (%s,%s)''', (MenuPesanan.MenuId, MenuPesanan.Jumlah ,))
-        rows = cursor.fetchall()
-        print(rows)
+        cursor.execute('''SELECT * FROM Menu_pesanan ORDER BY Id DESC LIMIT 1''')
+        row = cursor.fetchall()
+        row_dict = {"Id" : row[0], "MenuId" : row[1], "Jumlah" : row[2]}  # Assuming only one row is fetched
+        # Parse the dictionary using your Pydantic model
+        menu_pesanan = MenuPesanan(**row_dict)
         conn.commit()
         conn.close()
-        return MenuPesanan
+        return menu_pesanan
     else:
         conn.close()
         return MenuPesanan
@@ -109,9 +111,14 @@ def update_BahanMenu(id: int, Menu_id: int, menu_pesanan_baru:MenuPesanan, check
     cursor = conn.cursor()
 
     cursor.execute('''UPDATE Menu_pesanan SET Menu_Id=%s, Jumlah=%s WHERE Id=%s AND Menu_Id=%s''', ( menu_pesanan_baru.MenuId, menu_pesanan_baru.Jumlah, id, Menu_id,))
+    cursor.execute('''SELECT * FROM Menu_pesanan WHERE Id=%s And Menu_Id=%s''',id,Menu_id,)
+    row = cursor.fetchall()
+    row_dict = {"Id" : row[0], "MenuId" : row[1], "Jumlah" : row[2]}  # Assuming only one row is fetched
+        # Parse the dictionary using your Pydantic model
+    menu_pesanan = MenuPesanan(**row_dict)
     conn.commit()
     conn.close()
-    return menu_pesanan_baru
+    return menu_pesanan
 
 @menupesanan_router.delete("/{BahanMenu_id}", response_model=MenuPesanan)
 def delete_BahanMenu(id: int, Menu_id: int, check : Annotated[bool, Depends(check_is_admin)]):

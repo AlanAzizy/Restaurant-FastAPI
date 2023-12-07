@@ -69,9 +69,6 @@ def create_pesanan_router(pesanan:Pesanan, check : Annotated[bool, Depends(check
     conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
-    rows = cursor.fetchone()
-    id = rows[0]
 
     cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan JOIN Menu ON Menu.Menu_Id=Menu_Pesanan.Menu_Id WHERE Menu_pesanan.Id=%s''', (pesanan.DaftarMenu,) )
     rows = cursor.fetchone()
@@ -79,7 +76,11 @@ def create_pesanan_router(pesanan:Pesanan, check : Annotated[bool, Depends(check
 
     # Execute the query
     cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (pesanan.DaftarMenu, pesanan.TanggalPemesanan, rows[0] ,))
-    rows = cursor.fetchall()
+    
+    cursor.execute('''SELECT * FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
+    rows = cursor.fetchone()
+    pesanan = Pesanan(**{"PesananId" : rows[0], "DaftarMenu" : rows[1], "TanggalPemesanan" : rows[2], "Total" : rows[3]})
+
     conn.commit()
     conn.close()
     return pesanan
@@ -106,7 +107,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     SET STOK = STOK - (
         SELECT JUMLAH 
         FROM Bahan_Menu 
-        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
     WHERE Bahan.Bahan_Id IN (
         SELECT Bahan_Id 
@@ -114,11 +115,11 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
         WHERE Bahan_Menu.Menu_Id = %s
     )
     AND STOK >= (
-        SELECT Bahan_Menu.JUMLAH*Menu_Pesanan.JUMLAH 
-        FROM Bahan_Menu JOIN Menu_Pesanan ON Bahan_Menu.Menu_Id=Menu_Pesanan.Menu_Id
-        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        SELECT Bahan_Menu.JUMLAH*%s 
+        FROM Bahan_Menu
+        WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
-''', (data.MenuId, data.MenuId, data.MenuId, ))
+''', (data.MenuId, data.MenuId, data.Jumlah,data.MenuId, ))
     
         rows_affected = cursor.rowcount
         conn.commit()
@@ -128,7 +129,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
             print("Update successful. Rows affected:", rows_affected)
 
         # Execute the query
-            cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (%s,%s,%s)''', (data.MenuId, data.Jumlah ,))
+            cursor.execute('''INSERT INTO Menu_pesanan (Id,Menu_Id, Jumlah) VALUES (%s,%s,%s)''', (data.Id,data.MenuId, data.Jumlah ,))
             conn.commit()
             
     cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
@@ -145,7 +146,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     price = rows[0]
 
     # Execute the query
-    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s,%s)''', (id, date.today(), rows[0] ,))
+    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (id, date.today(), rows[0] ,))
     rows = cursor.fetchall()
     conn.commit()
 
@@ -165,6 +166,9 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
         "user_id": 0,
         "shipping_price": 0
     }
+    cursor.execute('''SELECT * FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
+    rows = cursor.fetchone()
+    pesanan = Pesanan(**{"PesananId" : rows[0], "DaftarMenu" : rows[1], "TanggalPemesanan" : rows[2], "Total" : rows[3]})
 
     conn.close()
     print(99)
@@ -172,13 +176,15 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
         response = requests.post(friend_service_url, json=data_to_send, headers=headers)
         # response.raise_for_status()
         friend_response_data = response.json()
-        return friend_response_data
+        data_To_send = {
+            "data" : pesanan,
+            "message" : friend_response_data
+        }
+        return data_To_send
     except requests.RequestException as e:
-        print(response.text)
+        print(e)
         raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
     #batas tidaka aman
-
-    return pesanan
 
 
 @pesanan_router.post("/createdata", response_model=PesananData)
@@ -198,12 +204,13 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
     print(id)
     for data in pesanan.Data :
         data.Id = id+1
+        print(data)
         cursor.execute('''
     UPDATE Bahan
     SET STOK = STOK - (
         SELECT JUMLAH 
         FROM Bahan_Menu 
-        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
     WHERE Bahan.Bahan_Id IN (
         SELECT Bahan_Id 
@@ -211,22 +218,24 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
         WHERE Bahan_Menu.Menu_Id = %s
     )
     AND STOK >= (
-        SELECT Bahan_Menu.JUMLAH*Menu_Pesanan.JUMLAH 
-        FROM Bahan_Menu JOIN Menu_Pesanan ON Bahan_Menu.Menu_Id = Menu_Pesanan.Menu_Id
-        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        SELECT Bahan_Menu.JUMLAH*%s 
+        FROM Bahan_Menu
+        WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
-''', (data.MenuId, data.MenuId, data.MenuId, ))
+''', (data.MenuId, data.MenuId, data.Jumlah,data.MenuId, ))
+        print('cp')
     
         rows_affected = cursor.rowcount
-        conn.commit()
         
-
+        
+        print('ini ngupdate stok')
         if rows_affected > 0:
             print("Update successful. Rows affected:", rows_affected)
 
         # Execute the query
-            cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (%s,%s,%s)''', (data.MenuId, data.Jumlah ,))
-            conn.commit()
+            cursor.execute('''INSERT INTO Menu_pesanan (Id, Menu_Id, Jumlah) VALUES (%s,%s,%s)''', (data.Id,data.MenuId, data.Jumlah ,))
+            print('berhasil')
+    conn.commit()
             
     cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
     rows = cursor.fetchone()
@@ -241,8 +250,10 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
     print(rows[0])
 
     # Execute the query
-    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s,%s)''', (id, date.today(), rows[0] ,))
-    rows = cursor.fetchall()
+    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (id, date.today(), rows[0] ,))
+    cursor.execute('''SELECT * FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
+    rows = cursor.fetchone()
+    pesanan = Pesanan(**{"PesananId" : rows[0], "DaftarMenu" : rows[1], "TanggalPemesanan" : rows[2], "Total" : rows[3]})
     conn.commit()
     conn.close()
     return pesanan
@@ -255,10 +266,13 @@ def update_bahanmakanan(pesanan_id: int, pesanan_baru:Pesanan, check : Annotated
     conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''UPDATE Pesanan SET Daftar_Menu=%s, Tanggal_Pemesanan=%s, Total=%s WHERE Pesanan_Id=%s''', ( pesanan_baru.DaftarMenu, pesanan_baru.TanggalPemesanan,pesanan_baru.Total, pesanan_id,))
+    cursor.execute('''UPDATE Pesanan SET Daftar_Menu=%s, Tanggal_Pemesanan=%s, Total=%s WHERE Pesanan_Id=%s''', ( pesanan_baru.DaftarMenu, str(pesanan_baru.TanggalPemesanan),pesanan_baru.Total, pesanan_id,))
+    cursor.execute('''SELECT * FROM Pesanan WHERE Pesanan_Id=%s''',(pesanan_id,))
+    rows = cursor.fetchone()
+    pesanan = Pesanan(**{"PesananId" : rows[0], "DaftarMenu" : rows[1], "TanggalPemesanan" : rows[2], "Total" : rows[3]})
     conn.commit()
     conn.close()
-    return pesanan_baru
+    return pesanan
 
 @pesanan_router.delete("/{pesanan_id}", response_model=Pesanan)
 def delete_bahanmakanan(pesanan_id: int, check : Annotated[bool, Depends(check_is_admin)]):

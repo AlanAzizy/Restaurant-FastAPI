@@ -144,7 +144,10 @@ def create_menu(menu: Menu, check : Annotated[bool, Depends(check_is_admin)]):
 
     # Execute the query
     cursor.execute('''INSERT INTO Menu (Nama, Deskripsi, Harga) VALUES (%s,%s,%s)''', (menu.NamaMenu, menu.Deskripsi, menu.Harga ,))
-    rows = cursor.fetchall()
+    cursor.execute('''SELECT * FROM MENU ORDER BY Menu_id DESC LIMIT 1''')
+    row = cursor.fetchall()
+    row_dict = {"MenuId" : row[0], "NamaMenu" : row[1], "Deskripsi" : row[2], "Harga" : row[3]}
+    menu = Menu(**row_dict)
     conn.commit()
     conn.close()
     return menu
@@ -157,9 +160,14 @@ def update_menu(menu_id: int, menu_baru: Menu, check : Annotated[bool, Depends(c
     cursor = conn.cursor()
 
     cursor.execute('''UPDATE Menu SET Nama=%s, Deskripsi=%s, Harga=%s WHERE Menu_Id=%s''', ( menu_baru.NamaMenu, menu_baru.Deskripsi, menu_baru.Harga, menu_id,))
+    cursor.execute('''SELECT * FROM MENU WHERE Menu_Id=%s''',(menu_id,))
+    row = cursor.fetchall()
+    row_dict = {"MenuId" : row[0], "NamaMenu" : row[1], "Deskripsi" : row[2], "Harga" : row[3]}
+    menu = Menu(**row_dict)
+    
     conn.commit()
     conn.close()
-    return menu_baru
+    return menu
 
 @menu_router.delete("/{menu_id}", response_model=Menu)
 def delete_menu(menu_id: int, check : Annotated[bool, Depends(check_is_admin)]):
