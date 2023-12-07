@@ -144,9 +144,15 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     pesanan.Total = rows[0]
     print(rows[0])
     price = rows[0]
+    ddate = date.today()
+    dat_data = str(ddate.year)+'-'+str(ddate.month)+'-'
+    if ddate.day<10 :
+        dat_data = dat_data+'0'+str(ddate.day)
+    else :
+        dat_data = dat_data+str(ddate.day)
 
     # Execute the query
-    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (id, date.today().strftime('%Y-%m-%d'), rows[0] ,))
+    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (id, dat_data, rows[0] ,))
     rows = cursor.fetchall()
     conn.commit()
 
@@ -249,8 +255,15 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
     pesanan.Total = rows[0]
     print(rows[0])
 
+    ddate = date.today()
+    dat_data = str(ddate.year)+'-'+str(ddate.month)+'-'
+    if ddate.day<10 :
+        dat_data = dat_data+'0'+str(ddate.day)
+    else :
+        dat_data = dat_data+str(ddate.day)
+
     # Execute the query
-    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (id, date.today().strftime('%Y-%m-%d'), rows[0] ,))
+    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (id, dat_data, rows[0] ,))
     cursor.execute('''SELECT * FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
     rows = cursor.fetchone()
     pesanan = Pesanan(**{"PesananId" : rows[0], "DaftarMenu" : rows[1], "TanggalPemesanan" : rows[2], "Total" : rows[3]})
