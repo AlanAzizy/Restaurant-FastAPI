@@ -42,7 +42,7 @@ def read_Menu(menu_id: int, check : Annotated[bool, Depends(check_is_login)]):
     cursor = conn.cursor()
 
     # Execute the query
-    cursor.execute('''SELECT * FROM Menu WHERE Menu_Id = ?''', (menu_id,))
+    cursor.execute('''SELECT * FROM Menu WHERE Menu_Id = %s''', (menu_id,))
     row = cursor.fetchone()
     conn.commit()
     conn.close()
@@ -147,7 +147,7 @@ def create_menu(menu: Menu, check : Annotated[bool, Depends(check_is_admin)]):
         id=0
 
     # Execute the query
-    cursor.execute('''INSERT INTO Menu (Nama, Deskripsi, Harga) VALUES (?,?,?,?)''', (menu.NamaMenu, menu.Deskripsi, menu.Harga ,))
+    cursor.execute('''INSERT INTO Menu (Nama, Deskripsi, Harga) VALUES (%s,%s,%s,%s)''', (menu.NamaMenu, menu.Deskripsi, menu.Harga ,))
     rows = cursor.fetchall()
     conn.commit()
     conn.close()
@@ -160,7 +160,7 @@ def update_menu(menu_id: int, menu_baru: Menu, check : Annotated[bool, Depends(c
     conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''UPDATE Menu SET Nama=?, Deskripsi=?, Harga=? WHERE Menu_Id=?''', ( menu_baru.NamaMenu, menu_baru.Deskripsi, menu_baru.Harga, menu_id,))
+    cursor.execute('''UPDATE Menu SET Nama=%s, Deskripsi=%s, Harga=%s WHERE Menu_Id=%s''', ( menu_baru.NamaMenu, menu_baru.Deskripsi, menu_baru.Harga, menu_id,))
     conn.commit()
     conn.close()
     return menu_baru
@@ -172,7 +172,7 @@ def delete_menu(menu_id: int, check : Annotated[bool, Depends(check_is_admin)]):
     conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''SELECT * FROM Menu WHERE Menu_Id = ?''', (menu_id,))
+    cursor.execute('''SELECT * FROM Menu WHERE Menu_Id = %s''', (menu_id,))
     row = cursor.fetchone()
     if row:
         # Assuming rows contain tuples from the database
@@ -180,7 +180,7 @@ def delete_menu(menu_id: int, check : Annotated[bool, Depends(check_is_admin)]):
         row_dict = {"MenuId" : row[0], "NamaMenu" : row[1], "Deskripsi" : row[2], "Harga" : row[3]}
         menu = Menu(**row_dict)
     
-    cursor.execute('''DELETE FROM Menu WHERE Menu_Id=?''', (menu_id,))
+    cursor.execute('''DELETE FROM Menu WHERE Menu_Id=%s''', (menu_id,))
     conn.commit()
     conn.close()
     return menu

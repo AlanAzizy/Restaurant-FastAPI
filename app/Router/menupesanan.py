@@ -38,7 +38,7 @@ async def retrieve_BahanMenu(id : int, check : Annotated[bool, Depends(check_is_
     cursor = conn.cursor()
 
     # Execute the query
-    cursor.execute('''SELECT * FROM Menu_pesanan WHERE Id = ?''', (id,))
+    cursor.execute('''SELECT * FROM Menu_pesanan WHERE Id = %s''', (id,))
     rows = cursor.fetchall()
     print(rows)
     menu_pesanan_list = []
@@ -69,17 +69,17 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
     SET STOK = STOK - (
         SELECT JUMLAH 
         FROM Bahan_Menu 
-        WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
     WHERE Bahan.Bahan_Id IN (
         SELECT Bahan_Id 
         FROM Bahan_Menu 
-        WHERE Bahan_Menu.Menu_Id = ?
+        WHERE Bahan_Menu.Menu_Id = %s
     )
     AND STOK >= (
         SELECT Bahan_Menu.JUMLAH*Menu_Pesanan.JUMLAH 
         FROM Bahan_Menu JOIN Menu_Pesanan ON Bahan_Menu.Menu_Id=Menu_Pesanan.Menu_Id
-        WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
 ''', (MenuPesanan.MenuId, MenuPesanan.MenuId, MenuPesanan.MenuId, ))
     
@@ -91,7 +91,7 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
         print("Update successful. Rows affected:", rows_affected)
 
     # Execute the query
-        cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (?,?,?)''', (MenuPesanan.MenuId, MenuPesanan.Jumlah ,))
+        cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (%s,%s,%s)''', (MenuPesanan.MenuId, MenuPesanan.Jumlah ,))
         rows = cursor.fetchall()
         print(rows)
         conn.commit()
@@ -108,7 +108,7 @@ def update_BahanMenu(id: int, Menu_id: int, menu_pesanan_baru:MenuPesanan, check
     conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''UPDATE Menu_pesanan SET Menu_Id=?, Jumlah=? WHERE Id=? AND Menu_Id=?''', ( menu_pesanan_baru.MenuId, menu_pesanan_baru.Jumlah, id, Menu_id,))
+    cursor.execute('''UPDATE Menu_pesanan SET Menu_Id=%s, Jumlah=%s WHERE Id=%s AND Menu_Id=%s''', ( menu_pesanan_baru.MenuId, menu_pesanan_baru.Jumlah, id, Menu_id,))
     conn.commit()
     conn.close()
     return menu_pesanan_baru
@@ -120,7 +120,7 @@ def delete_BahanMenu(id: int, Menu_id: int, check : Annotated[bool, Depends(chec
     conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''SELECT * FROM Menu_pesanan WHERE Id = ? AND Menu_Id=?''', (id, Menu_id, ))
+    cursor.execute('''SELECT * FROM Menu_pesanan WHERE Id = %s AND Menu_Id=%s''', (id, Menu_id, ))
     row = cursor.fetchone()
     if row:
         # Assuming rows contain tuples from the database
@@ -129,7 +129,7 @@ def delete_BahanMenu(id: int, Menu_id: int, check : Annotated[bool, Depends(chec
         # Parse the dictionary using your Pydantic model
         menu_pesanan = MenuPesanan(**row_dict)
     
-    cursor.execute('''DELETE FROM Menu_pesanan WHERE Id=? AND Menu_Id=?''', (id, Menu_id, ))
+    cursor.execute('''DELETE FROM Menu_pesanan WHERE Id=%s AND Menu_Id=%s''', (id, Menu_id, ))
     conn.commit()
     conn.close()
     return menu_pesanan

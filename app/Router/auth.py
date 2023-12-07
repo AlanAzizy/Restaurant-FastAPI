@@ -146,7 +146,7 @@ async def register_user(username : str = Form(...), password : str = Form(...), 
     
     cursor.execute('''
         INSERT INTO USER (username, email, hashed_password, full_name, role)
-        VALUES (%s,%s,%s,%s,%s,%s)
+        VALUES (%s,%s,%s,%s,%s)
     ''', (username, email, get_password_hash(password), full_name, 'user', ))
 
     conn.commit()

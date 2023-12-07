@@ -38,7 +38,7 @@ async def retrieve_BahanMenu(id : int, check : Annotated[bool, Depends(check_is_
     cursor = conn.cursor()
 
     # Execute the query
-    cursor.execute('''SELECT * FROM Bahan_Menu WHERE Menu_Id = ?''', (id,))
+    cursor.execute('''SELECT * FROM Bahan_Menu WHERE Menu_Id = %s''', (id,))
     rows = cursor.fetchall()
     print(rows)
     bahan_menu_list = []
@@ -64,7 +64,7 @@ def create_bahanmenu_router(BahanMenu:BahanMenu, check : Annotated[bool, Depends
     conn = connectDB()
     cursor = conn.cursor()
     # Execute the query
-    cursor.execute('''INSERT INTO Bahan_Menu (Menu_Id, Bahan_Id, Jumlah) VALUES (?,?,?)''', (BahanMenu.MenuId, BahanMenu.BahanId, BahanMenu.Jumlah ,))
+    cursor.execute('''INSERT INTO Bahan_Menu (Menu_Id, Bahan_Id, Jumlah) VALUES (%s,%s,%s)''', (BahanMenu.MenuId, BahanMenu.BahanId, BahanMenu.Jumlah ,))
     rows = cursor.fetchall()
     conn.commit()
     conn.close()
@@ -77,7 +77,7 @@ def update_BahanMenu(Menu_id: int, Bahan_id: int, BahanMenu_baru:BahanMenu, chec
     conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''UPDATE Bahan_Menu SET Bahan_Id=?, Jumlah=? WHERE Menu_Id=? AND Bahan_Id=?''', ( BahanMenu_baru.BahanId, BahanMenu_baru.Jumlah, Menu_id, Bahan_id,))
+    cursor.execute('''UPDATE Bahan_Menu SET Bahan_Id=%s, Jumlah=%s WHERE Menu_Id=%s AND Bahan_Id=%s''', ( BahanMenu_baru.BahanId, BahanMenu_baru.Jumlah, Menu_id, Bahan_id,))
     conn.commit()
     conn.close()
     return BahanMenu_baru
@@ -89,7 +89,7 @@ def delete_BahanMenu(Menu_id: int, Bahan_id: int, check : Annotated[bool, Depend
     conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''SELECT * FROM Bahan_Menu WHERE Menu_Id = ? AND Bahan_Id=?''', (Menu_id, Bahan_id,))
+    cursor.execute('''SELECT * FROM Bahan_Menu WHERE Menu_Id = %s AND Bahan_Id=%s''', (Menu_id, Bahan_id,))
     row = cursor.fetchone()
     if row:
         # Assuming rows contain tuples from the database
@@ -98,7 +98,7 @@ def delete_BahanMenu(Menu_id: int, Bahan_id: int, check : Annotated[bool, Depend
         # Parse the dictionary using your Pydantic model
         bahan_makanan = BahanMenu(**row_dict)
     
-    cursor.execute('''DELETE FROM Bahan_Menu WHERE Menu_Id=? AND Bahan_Id=?''', (Menu_id, Bahan_id,))
+    cursor.execute('''DELETE FROM Bahan_Menu WHERE Menu_Id=%s AND Bahan_Id=%s''', (Menu_id, Bahan_id,))
     conn.commit()
     conn.close()
     return bahan_makanan
