@@ -7,6 +7,7 @@ from app.Models.PesananData import PesananData
 from app.Models.UserInDB import UserInDB
 from typing import List, Annotated
 from app.Middleware.jwt import check_is_admin, check_is_login, get_current_user
+from app.Database.connection import connectDB
 import json
 import sqlite3
 from app.Router.menupesanan import create_menupesanan
@@ -20,7 +21,7 @@ pesanan_router = APIRouter(
 async def retrieve_all_Pesanan(check : Annotated[bool, Depends(check_is_login)]) -> List[Pesanan] :
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
@@ -41,11 +42,11 @@ async def retrieve_all_Pesanan(check : Annotated[bool, Depends(check_is_login)])
 async def retrieve_Pesanan(id : int, check : Annotated[bool, Depends(check_is_login)]) -> Pesanan:
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
-    cursor.execute('''SELECT * FROM Pesanan WHERE Pesanan_Id = ?''', (id,))
+    cursor.execute('''SELECT * FROM Pesanan WHERE Pesanan_Id = %s''', (id,))
     row = cursor.fetchone()
     conn.commit()
     conn.close()
@@ -65,19 +66,19 @@ async def retrieve_Pesanan(id : int, check : Annotated[bool, Depends(check_is_lo
 def create_pesanan_router(pesanan:Pesanan, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
     rows = cursor.fetchone()
     id = rows[0]
 
-    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan NATURAL JOIN Menu WHERE Menu_pesanan.Id=?''', (pesanan.DaftarMenu,) )
+    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan JOIN Menu ON Menu.Menu_Id=Menu_Pesanan.Menu_Id WHERE Menu_pesanan.Id=%s''', (pesanan.DaftarMenu,) )
     rows = cursor.fetchone()
     print(rows[0])
 
     # Execute the query
-    cursor.execute('''INSERT INTO Pesanan (Pesanan_Id, Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (?,?,?,?)''', (id+1,pesanan.DaftarMenu, pesanan.TanggalPemesanan, rows[0] ,))
+    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s,%s)''', (pesanan.DaftarMenu, pesanan.TanggalPemesanan, rows[0] ,))
     rows = cursor.fetchall()
     conn.commit()
     conn.close()
@@ -87,7 +88,7 @@ def create_pesanan_router(pesanan:Pesanan, check : Annotated[bool, Depends(check
 def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''SELECT Id FROM Menu_Pesanan ORDER BY Id DESC LIMIT 1''')
@@ -105,17 +106,17 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     SET STOK = STOK - (
         SELECT JUMLAH 
         FROM Bahan_Menu 
-        WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
     WHERE Bahan.Bahan_Id IN (
         SELECT Bahan_Id 
         FROM Bahan_Menu 
-        WHERE Bahan_Menu.Menu_Id = ?
+        WHERE Bahan_Menu.Menu_Id = %s
     )
     AND STOK >= (
         SELECT Bahan_Menu.JUMLAH*Menu_Pesanan.JUMLAH 
-        FROM Bahan_Menu NATURAL JOIN Menu_Pesanan
-        WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        FROM Bahan_Menu JOIN Menu_Pesanan ON Bahan_Menu.Menu_Id=Menu_Pesanan.Menu_Id
+        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
 ''', (data.MenuId, data.MenuId, data.MenuId, ))
     
@@ -127,7 +128,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
             print("Update successful. Rows affected:", rows_affected)
 
         # Execute the query
-            cursor.execute('''INSERT INTO Menu_pesanan (Id, Menu_Id, Jumlah) VALUES (?,?,?)''', (data.Id, data.MenuId, data.Jumlah ,))
+            cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (%s,%s,%s)''', (data.MenuId, data.Jumlah ,))
             conn.commit()
             
     cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
@@ -137,14 +138,14 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     else :
         Id=0
 
-    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan NATURAL JOIN Menu WHERE Menu_pesanan.Id=?''', (id,) )
+    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan JOIN Menu ON Menu_Pesanan.Menu_Id=Menu.Menu_Id WHERE Menu_pesanan.Id=%s''', (id,) )
     rows = cursor.fetchone()
     pesanan.Total = rows[0]
     print(rows[0])
     price = rows[0]
 
     # Execute the query
-    cursor.execute('''INSERT INTO Pesanan (Pesanan_Id, Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (?,?,?,?)''', (Id+1,id, date.today(), rows[0] ,))
+    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s,%s)''', (id, date.today(), rows[0] ,))
     rows = cursor.fetchall()
     conn.commit()
 
@@ -184,7 +185,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
 def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depends(check_is_login)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''SELECT Id FROM Menu_Pesanan ORDER BY Id DESC LIMIT 1''')
@@ -202,17 +203,17 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
     SET STOK = STOK - (
         SELECT JUMLAH 
         FROM Bahan_Menu 
-        WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
     WHERE Bahan.Bahan_Id IN (
         SELECT Bahan_Id 
         FROM Bahan_Menu 
-        WHERE Bahan_Menu.Menu_Id = ?
+        WHERE Bahan_Menu.Menu_Id = %s
     )
     AND STOK >= (
         SELECT Bahan_Menu.JUMLAH*Menu_Pesanan.JUMLAH 
-        FROM Bahan_Menu NATURAL JOIN Menu_Pesanan
-        WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
+        FROM Bahan_Menu JOIN Menu_Pesanan ON Bahan_Menu.Menu_Id = Menu_Pesanan.Menu_Id
+        WHERE Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
 ''', (data.MenuId, data.MenuId, data.MenuId, ))
     
@@ -224,7 +225,7 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
             print("Update successful. Rows affected:", rows_affected)
 
         # Execute the query
-            cursor.execute('''INSERT INTO Menu_pesanan (Id, Menu_Id, Jumlah) VALUES (?,?,?)''', (data.Id, data.MenuId, data.Jumlah ,))
+            cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (%s,%s,%s)''', (data.MenuId, data.Jumlah ,))
             conn.commit()
             
     cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
@@ -234,13 +235,13 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
     else :
         Id=0
 
-    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan NATURAL JOIN Menu WHERE Menu_pesanan.Id=?''', (id,) )
+    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan JOIN Menu ON Menu_Pesanan.Menu_Id=Menu.Menu_Id WHERE Menu_pesanan.Id=%s''', (id,) )
     rows = cursor.fetchone()
     pesanan.Total = rows[0]
     print(rows[0])
 
     # Execute the query
-    cursor.execute('''INSERT INTO Pesanan (Pesanan_Id, Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (?,?,?,?)''', (Id+1,id, date.today(), rows[0] ,))
+    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s,%s)''', (id, date.today(), rows[0] ,))
     rows = cursor.fetchall()
     conn.commit()
     conn.close()
@@ -251,10 +252,10 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
 def update_bahanmakanan(pesanan_id: int, pesanan_baru:Pesanan, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''UPDATE Pesanan SET Daftar_Menu=?, Tanggal_Pemesanan=?, Total=? WHERE Pesanan_Id=?''', ( pesanan_baru.DaftarMenu, pesanan_baru.TanggalPemesanan,pesanan_baru.Total, pesanan_id,))
+    cursor.execute('''UPDATE Pesanan SET Daftar_Menu=%s, Tanggal_Pemesanan=%s, Total=%s WHERE Pesanan_Id=%s''', ( pesanan_baru.DaftarMenu, pesanan_baru.TanggalPemesanan,pesanan_baru.Total, pesanan_id,))
     conn.commit()
     conn.close()
     return pesanan_baru
@@ -263,10 +264,10 @@ def update_bahanmakanan(pesanan_id: int, pesanan_baru:Pesanan, check : Annotated
 def delete_bahanmakanan(pesanan_id: int, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''SELECT * FROM Pesanan WHERE Pesanan_Id = ?''', (pesanan_id,))
+    cursor.execute('''SELECT * FROM Pesanan WHERE Pesanan_Id = %s''', (pesanan_id,))
     row = cursor.fetchone()
     if row:
         # Assuming rows contain tuples from the database
@@ -275,7 +276,7 @@ def delete_bahanmakanan(pesanan_id: int, check : Annotated[bool, Depends(check_i
         # Parse the dictionary using your Pydantic model
         pesanan = Pesanan(**row_dict)
     
-    cursor.execute('''DELETE FROM Pesanan WHERE Pesanan_Id=?''', (pesanan_id,))
+    cursor.execute('''DELETE FROM Pesanan WHERE Pesanan_Id=%s''', (pesanan_id,))
     conn.commit()
     conn.close()
     return pesanan
@@ -343,8 +344,8 @@ async def get_pesan_antar_data(id: int,check : Annotated[bool, Depends(check_is_
         friend_response_data = response.json()
         return friend_response_data
     except requests.RequestException as e:
-        print(response.text)
-        raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
+        print(e)
+        raise HTTPException(status_code=500, detail=f"Failed to generate service: {str(e)}")
 
 
 

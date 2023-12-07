@@ -25,8 +25,9 @@ cursor = conn.cursor()
 print("Opened database succesfully")
 
 userdata = []
+print(get_password_hash('inialan'))
 
-conn.execute('''INSERT INTO User (ID, USERNAME, FULL_NAME, EMAIL, HASHED_PASSWORD) VALUES (?,?,?,?,?)''', (5,"suli","suli","jikir",get_password_hash("12345678")))
+conn.execute('''INSERT INTO User (ID, USERNAME, FULL_NAME, EMAIL, HASHED_PASSWORD, ROLE) VALUES (?,?,?,?,?,?)''', (1,"ALAN","alan","alan",get_password_hash("inialan"), 'admin'))
 
 cursor.execute('''SELECT * FROM User''')
 
@@ -119,7 +120,8 @@ print(rows)
 #              (Id INT NOT NULL,
 #              Menu_Id NOT NULL,
 #              PRIMARY KEY (Id, Menu_Id),
-#              FOREIGN KEY (Menu_Id) REFERENCES Menu(Menu_Id))''')
+#              FOREIGN KEY (Menu_Id) REFERENCES Menu(Menu_Id),
+#               JUMLAH INT NOT NULL)''')
 # conn.execute('''ALTER TABLE MENU_PESANAN ADD COLUMN JUMLAH INT NOT NULL''')
 
 # conn.execute('''CREATE TABLE Pesanan

@@ -3,6 +3,7 @@ from app.Models.Menu import Menu
 from app.Models.Pesanan import Pesanan
 from typing import List, Annotated
 from app.Middleware.jwt import check_is_admin, check_is_login
+from app.Database.connection import connectDB
 import json
 import sqlite3
 
@@ -37,7 +38,7 @@ with open("app/main.json", "r") as file :
 def read_Menu(menu_id: int, check : Annotated[bool, Depends(check_is_login)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
@@ -60,7 +61,7 @@ def read_Menu(menu_id: int, check : Annotated[bool, Depends(check_is_login)]):
 def read_semua_Menu(check : Annotated[bool, Depends(check_is_login)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
@@ -80,7 +81,7 @@ def read_semua_Menu(check : Annotated[bool, Depends(check_is_login)]):
 def get_menu_stok(check : Annotated[bool, Depends(check_is_login)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''SELECT HARGA FROM MENU''')
@@ -115,7 +116,7 @@ HAVING
 def get_menu_terlaris(check : Annotated[bool, Depends(check_is_login)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''SELECT Menu.Nama AS NamaMenu, COUNT(*) AS TotalBought
@@ -135,7 +136,7 @@ def get_menu_terlaris(check : Annotated[bool, Depends(check_is_login)]):
 def create_menu(menu: Menu, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''SELECT Menu_Id FROM Menu ORDER BY Menu_Id DESC LIMIT 1''')
@@ -146,7 +147,7 @@ def create_menu(menu: Menu, check : Annotated[bool, Depends(check_is_admin)]):
         id=0
 
     # Execute the query
-    cursor.execute('''INSERT INTO Menu (Menu_Id, Nama, Deskripsi, Harga) VALUES (?,?,?,?)''', (id+1,menu.NamaMenu, menu.Deskripsi, menu.Harga ,))
+    cursor.execute('''INSERT INTO Menu (Nama, Deskripsi, Harga) VALUES (?,?,?,?)''', (menu.NamaMenu, menu.Deskripsi, menu.Harga ,))
     rows = cursor.fetchall()
     conn.commit()
     conn.close()
@@ -156,7 +157,7 @@ def create_menu(menu: Menu, check : Annotated[bool, Depends(check_is_admin)]):
 def update_menu(menu_id: int, menu_baru: Menu, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''UPDATE Menu SET Nama=?, Deskripsi=?, Harga=? WHERE Menu_Id=?''', ( menu_baru.NamaMenu, menu_baru.Deskripsi, menu_baru.Harga, menu_id,))
@@ -168,7 +169,7 @@ def update_menu(menu_id: int, menu_baru: Menu, check : Annotated[bool, Depends(c
 def delete_menu(menu_id: int, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''SELECT * FROM Menu WHERE Menu_Id = ?''', (menu_id,))

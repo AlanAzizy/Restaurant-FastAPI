@@ -2,6 +2,7 @@ from fastapi import APIRouter, Body, HTTPException, status, Depends
 from app.Models.BahanMenu import BahanMenu
 from typing import List, Annotated
 from app.Middleware.jwt import check_is_admin
+from app.Database.connection import connectDB
 import json
 import sqlite3
 
@@ -13,7 +14,7 @@ bahanmenu_router = APIRouter(
 async def retrieve_all_bahanmenu(check : Annotated[bool, Depends(check_is_admin)]) -> List[BahanMenu] :
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
@@ -33,7 +34,7 @@ async def retrieve_all_bahanmenu(check : Annotated[bool, Depends(check_is_admin)
 async def retrieve_BahanMenu(id : int, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
@@ -60,7 +61,7 @@ async def retrieve_BahanMenu(id : int, check : Annotated[bool, Depends(check_is_
 def create_bahanmenu_router(BahanMenu:BahanMenu, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
     # Execute the query
     cursor.execute('''INSERT INTO Bahan_Menu (Menu_Id, Bahan_Id, Jumlah) VALUES (?,?,?)''', (BahanMenu.MenuId, BahanMenu.BahanId, BahanMenu.Jumlah ,))
@@ -73,7 +74,7 @@ def create_bahanmenu_router(BahanMenu:BahanMenu, check : Annotated[bool, Depends
 def update_BahanMenu(Menu_id: int, Bahan_id: int, BahanMenu_baru:BahanMenu, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''UPDATE Bahan_Menu SET Bahan_Id=?, Jumlah=? WHERE Menu_Id=? AND Bahan_Id=?''', ( BahanMenu_baru.BahanId, BahanMenu_baru.Jumlah, Menu_id, Bahan_id,))
@@ -85,7 +86,7 @@ def update_BahanMenu(Menu_id: int, Bahan_id: int, BahanMenu_baru:BahanMenu, chec
 def delete_BahanMenu(Menu_id: int, Bahan_id: int, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''SELECT * FROM Bahan_Menu WHERE Menu_Id = ? AND Bahan_Id=?''', (Menu_id, Bahan_id,))

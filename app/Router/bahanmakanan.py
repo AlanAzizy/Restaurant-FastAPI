@@ -1,6 +1,7 @@
 from app.Middleware.jwt import check_is_admin
 from fastapi import APIRouter, Body, HTTPException, status, Depends
 from app.Models.BahanMakanan import BahanMakanan
+from app.Database.connection import connectDB
 from typing import List, Annotated
 import json
 import sqlite3
@@ -13,7 +14,7 @@ bahanmakanan_router = APIRouter(
 async def retrieve_all_bahanmakanan(check : Annotated[bool, Depends(check_is_admin)]) -> List[BahanMakanan] :
     if not check :
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
@@ -33,11 +34,11 @@ async def retrieve_all_bahanmakanan(check : Annotated[bool, Depends(check_is_adm
 async def retrieve_bahanmakanan(id : int, check : Annotated[bool, Depends(check_is_admin)]) -> BahanMakanan:
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
-    cursor.execute('''SELECT * FROM Bahan WHERE Bahan_Id = ?''', (id,))
+    cursor.execute('''SELECT * FROM Bahan WHERE Bahan_Id = %s''', (id,))
     row = cursor.fetchone()
     conn.commit()
     conn.close()
@@ -57,7 +58,7 @@ async def retrieve_bahanmakanan(id : int, check : Annotated[bool, Depends(check_
 def create_bahanmakanan_router(bahanmakanan:BahanMakanan, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''SELECT Bahan_Id FROM Bahan ORDER BY Bahan_Id DESC LIMIT 1''')
@@ -68,7 +69,7 @@ def create_bahanmakanan_router(bahanmakanan:BahanMakanan, check : Annotated[bool
         id=0
 
     # Execute the query
-    cursor.execute('''INSERT INTO Bahan (Bahan_Id, Nama, STOK) VALUES (?,?,?)''', (id+1,bahanmakanan.NamaBahan, bahanmakanan.Stok ,))
+    cursor.execute('''INSERT INTO Bahan (Nama, STOK) VALUES (%s,%s,%s)''', (bahanmakanan.NamaBahan, bahanmakanan.Stok ,))
     rows = cursor.fetchall()
     conn.commit()
     conn.close()
@@ -78,10 +79,10 @@ def create_bahanmakanan_router(bahanmakanan:BahanMakanan, check : Annotated[bool
 def update_bahanmakanan(bahanmakanan_id: int, bahanmakanan_baru:BahanMakanan, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''UPDATE Bahan SET Nama=?, STOK=? WHERE Bahan_Id=?''', ( bahanmakanan_baru.NamaBahan, bahanmakanan_baru.Stok, bahanmakanan_id,))
+    cursor.execute('''UPDATE Bahan SET Nama=%s, STOK=%s WHERE Bahan_Id=%s''', ( bahanmakanan_baru.NamaBahan, bahanmakanan_baru.Stok, bahanmakanan_id,))
     conn.commit()
     conn.close()
     return bahanmakanan_baru
@@ -90,10 +91,10 @@ def update_bahanmakanan(bahanmakanan_id: int, bahanmakanan_baru:BahanMakanan, ch
 def delete_bahanmakanan(bahanmakanan_id: int, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
-    cursor.execute('''SELECT * FROM Bahan WHERE Bahan_Id = ?''', (bahanmakanan_id,))
+    cursor.execute('''SELECT * FROM Bahan WHERE Bahan_Id = %s''', (bahanmakanan_id,))
     row = cursor.fetchone()
     if row:
         # Assuming rows contain tuples from the database
@@ -102,7 +103,7 @@ def delete_bahanmakanan(bahanmakanan_id: int, check : Annotated[bool, Depends(ch
         # Parse the dictionary using your Pydantic model
         bahan_makanan = BahanMakanan(**row_dict)
     
-    cursor.execute('''DELETE FROM Bahan WHERE Bahan_Id=?''', (bahanmakanan_id,))
+    cursor.execute('''DELETE FROM Bahan WHERE Bahan_Id=%s''', (bahanmakanan_id,))
     conn.commit()
     conn.close()
     return bahan_makanan

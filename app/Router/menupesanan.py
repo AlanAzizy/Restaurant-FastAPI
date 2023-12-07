@@ -2,6 +2,7 @@ from fastapi import APIRouter, Body, HTTPException, status, Depends
 from app.Models.MenuPesanan import MenuPesanan
 from typing import List, Annotated
 from app.Middleware.jwt import check_is_admin
+from app.Database.connection import connectDB
 import json
 import sqlite3
 
@@ -13,7 +14,7 @@ menupesanan_router = APIRouter(
 async def retrieve_all_MenuPesanan(check : Annotated[bool, Depends(check_is_admin)]) -> List[MenuPesanan] :
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
@@ -33,7 +34,7 @@ async def retrieve_all_MenuPesanan(check : Annotated[bool, Depends(check_is_admi
 async def retrieve_BahanMenu(id : int, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
@@ -60,7 +61,7 @@ async def retrieve_BahanMenu(id : int, check : Annotated[bool, Depends(check_is_
 def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
     #kurangi stok
     cursor.execute('''
@@ -77,7 +78,7 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
     )
     AND STOK >= (
         SELECT Bahan_Menu.JUMLAH*Menu_Pesanan.JUMLAH 
-        FROM Bahan_Menu NATURAL JOIN Menu_Pesanan
+        FROM Bahan_Menu JOIN Menu_Pesanan ON Bahan_Menu.Menu_Id=Menu_Pesanan.Menu_Id
         WHERE Menu_Id = ? AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
 ''', (MenuPesanan.MenuId, MenuPesanan.MenuId, MenuPesanan.MenuId, ))
@@ -90,7 +91,7 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
         print("Update successful. Rows affected:", rows_affected)
 
     # Execute the query
-        cursor.execute('''INSERT INTO Menu_pesanan (Id, Menu_Id, Jumlah) VALUES (?,?,?)''', (MenuPesanan.Id, MenuPesanan.MenuId, MenuPesanan.Jumlah ,))
+        cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (?,?,?)''', (MenuPesanan.MenuId, MenuPesanan.Jumlah ,))
         rows = cursor.fetchall()
         print(rows)
         conn.commit()
@@ -104,7 +105,7 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
 def update_BahanMenu(id: int, Menu_id: int, menu_pesanan_baru:MenuPesanan, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''UPDATE Menu_pesanan SET Menu_Id=?, Jumlah=? WHERE Id=? AND Menu_Id=?''', ( menu_pesanan_baru.MenuId, menu_pesanan_baru.Jumlah, id, Menu_id,))
@@ -116,7 +117,7 @@ def update_BahanMenu(id: int, Menu_id: int, menu_pesanan_baru:MenuPesanan, check
 def delete_BahanMenu(id: int, Menu_id: int, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     cursor.execute('''SELECT * FROM Menu_pesanan WHERE Id = ? AND Menu_Id=?''', (id, Menu_id, ))

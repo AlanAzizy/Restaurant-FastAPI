@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from app.Middleware.jwt import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_active_user, get_password_hash, check_is_admin
 from app.Models.Token import Token
 from app.Models.User import User, UserRegistration
+from app.Database.connection import connectDB
 import requests
 import sqlite3
 
@@ -34,7 +35,7 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
     friend_service_url = "https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.io/login/single"
 
@@ -52,7 +53,7 @@ async def login_for_access_token(
         print(response.text)
         raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
     print(friend_token, username)
-    query = "UPDATE user SET friend_token = ? WHERE username = ?"
+    query = "UPDATE user SET friend_token = %s WHERE username = %s"
     cursor.execute(query, (friend_token, username, ))
     conn.commit()   
     conn.close()
@@ -92,7 +93,7 @@ async def read_own_items(
 async def read_own_items(
     check : Annotated[bool, Depends(check_is_admin)]
 ):
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
     cursor.execute('''SELECT * FROM USER''')
     rows = cursor.fetchall()
@@ -107,11 +108,11 @@ def test():
 @auth_router.post("/register", response_model=Token)
 async def register_user(username : str = Form(...), password : str = Form(...), email : str = Form(...), full_name : str = Form(...), flag : bool = Form(...), lat : float = Form(...), lon : float = Form(...)):
     # Check if the username is already taken
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # Execute the query
-    cursor.execute('''SELECT * FROM USER WHERE USERNAME = ?''', (username,))
+    cursor.execute('''SELECT * FROM USER WHERE USERNAME = %s''', (username,))
     rows = cursor.fetchall()
     print(rows)
     if rows:
@@ -144,9 +145,9 @@ async def register_user(username : str = Form(...), password : str = Form(...), 
     # Define and execute the SQL INSERT query
     
     cursor.execute('''
-        INSERT INTO USER (id, username, email, hashed_password, full_name, role)
-        VALUES (?,?,?,?,?,?)
-    ''', (row[0]+1, username, email, get_password_hash(password), full_name, 'user', ))
+        INSERT INTO USER (username, email, hashed_password, full_name, role)
+        VALUES (%s,%s,%s,%s,%s,%s)
+    ''', (username, email, get_password_hash(password), full_name, 'user', ))
 
     conn.commit()
 

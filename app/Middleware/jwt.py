@@ -8,6 +8,7 @@ from passlib.context import CryptContext
 from app.Models.TokenData import TokenData
 from app.Models.User import User
 from app.Models.UserInDB import UserInDB
+from app.Database.connection import connectDB
 import sqlite3
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -26,7 +27,7 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 def get_user(username: str):
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
 
     # cursor.execute('''SELECT name FROM sqlite_master WHERE type='table';''')
@@ -38,7 +39,7 @@ def get_user(username: str):
     print(rows)
 
     # Execute the query
-    cursor.execute('''SELECT * FROM USER WHERE USERNAME = ?''', (username,))
+    cursor.execute('''SELECT * FROM USER WHERE USERNAME = %s''', (username,))
     
     columns = [column[0] for column in cursor.description]
     rows = cursor.fetchall()
@@ -129,7 +130,7 @@ async def check_is_login(token: Annotated[bool, Depends(oauth2_scheme)]):
         raise credentials_exception
     
 async def check_is_admin(token: Annotated[bool, Depends(oauth2_scheme)]):
-    conn = sqlite3.connect('./app/resto.db')
+    conn = connectDB()
     cursor = conn.cursor()
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -144,7 +145,7 @@ async def check_is_admin(token: Annotated[bool, Depends(oauth2_scheme)]):
     except:
         raise credentials_exception
     print(username)
-    query = ("SELECT * FROM user WHERE username = ?")
+    query = ("SELECT * FROM user WHERE username = %s")
     cursor.execute(query, (username,))
     result = cursor.fetchone()
     conn.commit()
