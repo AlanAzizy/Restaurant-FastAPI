@@ -91,7 +91,7 @@ def create_menupesanan(MenuPesanan:MenuPesanan, check : Annotated[bool, Depends(
         print("Update successful. Rows affected:", rows_affected)
 
     # Execute the query
-        cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (%s,%s,%s)''', (MenuPesanan.MenuId, MenuPesanan.Jumlah ,))
+        cursor.execute('''INSERT INTO Menu_pesanan (Menu_Id, Jumlah) VALUES (%s,%s)''', (MenuPesanan.MenuId, MenuPesanan.Jumlah ,))
         rows = cursor.fetchall()
         print(rows)
         conn.commit()

@@ -83,11 +83,7 @@ def get_menu_stok(check : Annotated[bool, Depends(check_is_login)]):
         return
     conn = connectDB()
     cursor = conn.cursor()
-
-    cursor.execute('''SELECT HARGA FROM MENU''')
-
-    cursor.execute('''SELECT 
-    Menu.Menu_Id, 
+    cursor.execute('''SELECT Menu.Menu_Id, 
     Menu.Nama,
     Menu.Harga,
     MIN(Bahan.Stok / Bahan_Menu.Jumlah) AS AvailableMenu
@@ -147,7 +143,7 @@ def create_menu(menu: Menu, check : Annotated[bool, Depends(check_is_admin)]):
         id=0
 
     # Execute the query
-    cursor.execute('''INSERT INTO Menu (Nama, Deskripsi, Harga) VALUES (%s,%s,%s,%s)''', (menu.NamaMenu, menu.Deskripsi, menu.Harga ,))
+    cursor.execute('''INSERT INTO Menu (Nama, Deskripsi, Harga) VALUES (%s,%s,%s)''', (menu.NamaMenu, menu.Deskripsi, menu.Harga ,))
     rows = cursor.fetchall()
     conn.commit()
     conn.close()

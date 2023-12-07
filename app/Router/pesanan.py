@@ -78,7 +78,7 @@ def create_pesanan_router(pesanan:Pesanan, check : Annotated[bool, Depends(check
     print(rows[0])
 
     # Execute the query
-    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s,%s)''', (pesanan.DaftarMenu, pesanan.TanggalPemesanan, rows[0] ,))
+    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (pesanan.DaftarMenu, pesanan.TanggalPemesanan, rows[0] ,))
     rows = cursor.fetchall()
     conn.commit()
     conn.close()

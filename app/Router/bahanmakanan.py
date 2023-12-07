@@ -69,7 +69,7 @@ def create_bahanmakanan_router(bahanmakanan:BahanMakanan, check : Annotated[bool
         id=0
 
     # Execute the query
-    cursor.execute('''INSERT INTO Bahan (Nama, STOK) VALUES (%s,%s,%s)''', (bahanmakanan.NamaBahan, bahanmakanan.Stok ,))
+    cursor.execute('''INSERT INTO Bahan (Nama, STOK) VALUES (%s,%s)''', (bahanmakanan.NamaBahan, bahanmakanan.Stok ,))
     rows = cursor.fetchall()
     conn.commit()
     conn.close()
