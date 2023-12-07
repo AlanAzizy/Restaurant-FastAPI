@@ -58,13 +58,13 @@ async def retrieve_BahanMenu(id : int, check : Annotated[bool, Depends(check_is_
     )
 
 @bahanmenu_router.post("/", response_model=BahanMenu)
-def create_bahanmenu_router(BahanMenu:BahanMenu, check : Annotated[bool, Depends(check_is_admin)]):
+def create_bahanmenu_router(Bahanmenu:BahanMenu, check : Annotated[bool, Depends(check_is_admin)]):
     if not check:
         return
     conn = connectDB()
     cursor = conn.cursor()
     # Execute the query
-    cursor.execute('''INSERT INTO Bahan_Menu (Menu_Id, Bahan_Id, Jumlah) VALUES (%s,%s,%s)''', (BahanMenu.MenuId, BahanMenu.BahanId, BahanMenu.Jumlah ,))
+    cursor.execute('''INSERT INTO Bahan_Menu (Menu_Id, Bahan_Id, Jumlah) VALUES (%s,%s,%s)''', (Bahanmenu.MenuId, Bahanmenu.BahanId, Bahanmenu.Jumlah ,))
     cursor.execute('''SELECT * FROM Bahan_Menu WHERE ORDER BY Menu_Id DESC LIMIT 1''')
     row=cursor.fetchone()
     row_dict = {"MenuId" : row[0], "BahanId" : row[1], "Jumlah" : row[2]}  # Assuming only one row is fetched

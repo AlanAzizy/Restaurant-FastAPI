@@ -122,7 +122,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
 ''', (data.MenuId, data.MenuId, data.Jumlah,data.MenuId, ))
     
         rows_affected = cursor.rowcount
-        conn.commit()
+        
         
 
         if rows_affected > 0:
@@ -130,8 +130,8 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
 
         # Execute the query
             cursor.execute('''INSERT INTO Menu_pesanan (Id,Menu_Id, Jumlah) VALUES (%s,%s,%s)''', (data.Id,data.MenuId, data.Jumlah ,))
-            conn.commit()
-            
+        
+    conn.commit()     
     cursor.execute('''SELECT Pesanan_Id FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
     rows = cursor.fetchone()
     if rows :
@@ -146,7 +146,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     price = rows[0]
 
     # Execute the query
-    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (id, date.today(), rows[0] ,))
+    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (id, date.today().strftime('%Y-%m-%d'), rows[0] ,))
     rows = cursor.fetchall()
     conn.commit()
 
@@ -173,7 +173,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     conn.close()
     print(99)
     try:
-        response = requests.post(friend_service_url, json=data_to_send, headers=headers)
+        response = requests.post(friend_service_url, data=data_to_send, headers=headers)
         # response.raise_for_status()
         friend_response_data = response.json()
         data_To_send = {
@@ -187,7 +187,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     #batas tidaka aman
 
 
-@pesanan_router.post("/createdata", response_model=PesananData)
+@pesanan_router.post("/createdata", response_model=Pesanan)
 def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depends(check_is_login)]):
     if not check:
         return
@@ -250,7 +250,7 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
     print(rows[0])
 
     # Execute the query
-    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (id, date.today(), rows[0] ,))
+    cursor.execute('''INSERT INTO Pesanan (Daftar_Menu, Tanggal_Pemesanan, Total) VALUES (%s,%s,%s)''', (id, date.today().strftime('%Y-%m-%d'), rows[0] ,))
     cursor.execute('''SELECT * FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
     rows = cursor.fetchone()
     pesanan = Pesanan(**{"PesananId" : rows[0], "DaftarMenu" : rows[1], "TanggalPemesanan" : rows[2], "Total" : rows[3]})
