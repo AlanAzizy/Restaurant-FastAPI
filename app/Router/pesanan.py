@@ -355,11 +355,11 @@ async def get_pesan_antar_time(is_hemat : bool, check : Annotated[bool, Depends(
         print(response.text)
         raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
     
-@pesanan_router.get("/pesanantar/data")
+@pesanan_router.get("/pesanantar/data/{id}")
 async def get_pesan_antar_data(id: int,check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return
-    friend_service_url = f"https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.io/order"
+    friend_service_url = f"https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.io/order/{id}"
     print(user)
     ft = user.friend_token
     print(ft)
@@ -367,7 +367,7 @@ async def get_pesan_antar_data(id: int,check : Annotated[bool, Depends(check_is_
         "Authorization" : f"Bearer {ft}"
     }
     try:
-        response = requests.get(friend_service_url, headers=headers)
+        response = requests.get(friend_service_url, params=id, headers=headers)
         # response.raise_for_status()
         friend_response_data = response.json()
         return friend_response_data
