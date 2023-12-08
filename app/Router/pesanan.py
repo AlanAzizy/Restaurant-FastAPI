@@ -167,7 +167,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     rows = cursor.fetchone()
     pesanan = Pesanan(**{"PesananId" : rows[0], "DaftarMenu" : rows[1], "TanggalPemesanan" : rows[2], "Total" : rows[3]})
     data_to_send = {
-        "price": price,
+        "price": int(price),
         "food_id": 17,
         "is_hemat": is_hemat,
         "pesanan_id": rows[0]+1,
