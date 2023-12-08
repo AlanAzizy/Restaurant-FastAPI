@@ -119,7 +119,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
         FROM Bahan_Menu
         WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
-''', (data.MenuId, data.MenuId, data.Jumlah,data.MenuId, ))
+''', (data.MenuId, data.MenuId, data.Jumlah, data.MenuId, ))
     
         rows_affected = cursor.rowcount
         
@@ -179,7 +179,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     conn.close()
     print(99)
     try:
-        response = requests.post(friend_service_url, jsonn=data_to_send, headers=headers)
+        response = requests.post(friend_service_url, json=data_to_send, headers=headers)
         # response.raise_for_status()
         friend_response_data = response.json()
         data_To_send = {
