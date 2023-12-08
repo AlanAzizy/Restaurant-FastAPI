@@ -180,7 +180,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     print(99)
     print(data_to_send)
     try:
-        response = requests.post(friend_service_url, json=data_to_send, headers=headers)
+        response = requests.post(friend_service_url, data=data_to_send, headers=headers)
         # response.raise_for_status()
         friend_response_data = response.json()
         data_To_send = {
@@ -215,7 +215,7 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
         cursor.execute('''
     UPDATE Bahan
     SET STOK = STOK - (
-        SELECT JUMLAH 
+        SELECT JUMLAH*%s 
         FROM Bahan_Menu 
         WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
@@ -229,7 +229,7 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
         FROM Bahan_Menu
         WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
-''', (data.MenuId, data.MenuId, data.Jumlah,data.MenuId, ))
+''', (data.Jumlah,data.MenuId, data.MenuId, data.Jumlah,data.MenuId, ))
         print('cp')
     
         rows_affected = cursor.rowcount
