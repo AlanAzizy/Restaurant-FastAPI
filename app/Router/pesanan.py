@@ -139,7 +139,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     else :
         Id=0
 
-    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan JOIN Menu ON Menu_Pesanan.Menu_Id=Menu.Menu_Id WHERE Menu_pesanan.Id=%s''', (id,) )
+    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan JOIN Menu ON Menu_Pesanan.Menu_Id=Menu.Menu_Id WHERE Menu_pesanan.Id=%s''', (data.Id,) )
     rows = cursor.fetchone()
     pesanan.Total = rows[0]
     print(rows[0])
@@ -251,7 +251,7 @@ def create_data_pesanan_router(pesanan:PesananData, check : Annotated[bool, Depe
     else :
         Id=0
 
-    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan JOIN Menu ON Menu_Pesanan.Menu_Id=Menu.Menu_Id WHERE Menu_pesanan.Id=%s''', (id,) )
+    cursor.execute('''SELECT SUM(JUMLAH*Harga) as Total FROM Menu_Pesanan JOIN Menu ON Menu_Pesanan.Menu_Id=Menu.Menu_Id WHERE Menu_pesanan.Id=%s''', (data.Id,) )
     rows = cursor.fetchone()
     pesanan.Total = rows[0]
     print(rows[0])
