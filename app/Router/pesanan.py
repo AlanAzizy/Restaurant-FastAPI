@@ -358,7 +358,7 @@ async def get_pesan_antar_time(is_hemat : bool, check : Annotated[bool, Depends(
 async def get_pesan_antar_data(id: int,check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return
-    friend_service_url = f"https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.ios/order"
+    friend_service_url = f"https://prudentialfood.lemonbush-c4ec6395.australiaeast.azurecontainerapps.io/order"
     print(user)
     ft = user.friend_token
     print(ft)
