@@ -105,7 +105,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
         cursor.execute('''
     UPDATE Bahan
     SET STOK = STOK - (
-        SELECT JUMLAH 
+        SELECT JUMLAH*%s 
         FROM Bahan_Menu 
         WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
@@ -119,7 +119,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
         FROM Bahan_Menu
         WHERE Bahan_Menu.Menu_Id = %s AND Bahan_Menu.Bahan_Id = Bahan.Bahan_Id
     )
-''', (data.MenuId, data.MenuId, data.Jumlah, data.MenuId, ))
+''', (data.Jumlah,data.MenuId, data.MenuId, data.Jumlah, data.MenuId, ))
     
         rows_affected = cursor.rowcount
         
