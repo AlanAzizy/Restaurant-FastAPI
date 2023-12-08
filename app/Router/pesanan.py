@@ -354,7 +354,7 @@ async def get_pesan_antar_time(is_hemat : bool, check : Annotated[bool, Depends(
         print(response.text)
         raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
     
-@pesanan_router.get("/pesan/antar/data/{id}")
+@pesanan_router.get("/pesanantar/data")
 async def get_pesan_antar_data(id: int,check : Annotated[bool, Depends(check_is_login)], user : Annotated[UserInDB, Depends(get_current_user)]):
     if not check:
         return
