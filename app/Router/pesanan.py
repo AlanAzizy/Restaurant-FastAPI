@@ -180,7 +180,7 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     print(99)
     print(data_to_send)
     try:
-        response = requests.post(friend_service_url, data=data_to_send, headers=headers)
+        response = requests.post(friend_service_url, json=data_to_send, headers=headers)
         # response.raise_for_status()
         friend_response_data = response.json()
         data_To_send = {
