@@ -163,23 +163,23 @@ def create_pesanan_antar(pesanan: PesananData, is_hemat : bool, check : Annotate
     headers = {
         "Authorization" : f"Bearer {ft}"
     }
+    cursor.execute('''SELECT * FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
+    rows = cursor.fetchone()
+    pesanan = Pesanan(**{"PesananId" : rows[0], "DaftarMenu" : rows[1], "TanggalPemesanan" : rows[2], "Total" : rows[3]})
     data_to_send = {
         "price": price,
         "food_id": 17,
         "is_hemat": is_hemat,
-        "pesanan_id": Id+1,
+        "pesanan_id": rows[0]+1,
         "time": "string",
         "user_id": 0,
         "shipping_price": 0
     }
-    cursor.execute('''SELECT * FROM Pesanan ORDER BY Pesanan_Id DESC LIMIT 1''')
-    rows = cursor.fetchone()
-    pesanan = Pesanan(**{"PesananId" : rows[0], "DaftarMenu" : rows[1], "TanggalPemesanan" : rows[2], "Total" : rows[3]})
 
     conn.close()
     print(99)
     try:
-        response = requests.post(friend_service_url, data=data_to_send, headers=headers)
+        response = requests.post(friend_service_url, jsonn=data_to_send, headers=headers)
         # response.raise_for_status()
         friend_response_data = response.json()
         data_To_send = {
