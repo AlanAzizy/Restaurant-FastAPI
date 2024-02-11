@@ -54,9 +54,9 @@ async def login_for_access_token(
     #     print(response.text)
     #     raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
     
-    print(friend_token, username)
+    # print(friend_token, username)
     query = "UPDATE user SET friend_token = %s WHERE username = %s"
-    cursor.execute(query, (friend_token, username, ))
+    cursor.execute(query, ("", username, ))
     conn.commit()   
     conn.close()
     return {"access_token": access_token, "token_type": "bearer"}
