@@ -45,18 +45,18 @@ async def login_for_access_token(
     }
 
     #login to sul's api
-    # try:
-    #     response = requests.post(friend_service_url, data=friend_token_data)
-    #     # response.raise_for_status()
-    #     friend_response_data = response.json()
-    #     friend_token = friend_response_data.get("access_token")
-    # except requests.RequestException as e:
-    #     print(response.text)
-    #     raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
+    try:
+        response = requests.post(friend_service_url, data=friend_token_data)
+        # response.raise_for_status()
+        friend_response_data = response.json()
+        friend_token = friend_response_data.get("access_token")
+    except requests.RequestException as e:
+        print(response.text)
+        raise HTTPException(status_code=500, detail=f"Failed to generate token in friend's service: {str(e)}")
     
-    # print(friend_token, username)
+    print(friend_token, username)
     query = "UPDATE user SET friend_token = %s WHERE username = %s"
-    cursor.execute(query, ("", username, ))
+    cursor.execute(query, (friend_token, username, ))
     conn.commit()   
     conn.close()
     return {"access_token": access_token, "token_type": "bearer"}
